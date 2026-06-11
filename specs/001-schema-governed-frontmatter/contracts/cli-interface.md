@@ -19,7 +19,7 @@ The `fmctl` binary is a thin adapter over the library contract
 
 Read one top-level field. (`--schema` is accepted for symmetry; reads never validate.)
 
-- Human: the value printed plainly (lists as YAML flow, e.g. `[./a.md, ./b.md]`).
+- Human: the value printed plainly (lists and objects as YAML flow, e.g. `[./a.md, ./b.md]`).
 - JSON: `{ "file": "...", "field": "status", "value": "draft" }`
 - Exit: `0` found · `3` file/frontmatter/field missing · `4` malformed · `2` usage.
 
@@ -27,8 +27,9 @@ Read one top-level field. (`--schema` is accepted for symmetry; reads never vali
 
 Surgically update/create one or more fields; validated by default. (FR-002–FR-007)
 
-- Value syntax: YAML scalar; leading `[` → YAML flow sequence (JSON arrays valid). Quoting
-  forces string. Nested/mapping values → exit `2`.
+- Value syntax: a YAML value — plain scalar; leading `[` → flow sequence; leading `{` → flow
+  mapping (JSON arrays and objects are valid YAML flow). Quoting forces string. Always a
+  whole-value replacement of a top-level field; nested-path addressing is unsupported.
 - `--no-validate` bypasses **schema validation only** (FR-006). Integrity guarantees are not
   flag-controllable.
 - When no schema resolves (and not bypassed): write proceeds, stderr carries
@@ -45,7 +46,9 @@ Surgically update/create one or more fields; validated by default. (FR-002–FR-
 
 ## `fmctl lint [path...] [--json] [--schema <path>]`
 
-Validate all Markdown files beneath the given paths (default `.`). (FR-011–FR-013)
+Validate the given files and directories (default `.`): explicit file paths are linted
+directly; directories are walked recursively — always, no recursion toggle in v0.1.
+(FR-011–FR-013)
 
 - Discovery: recursive `*.md`, skipping `node_modules`, `.git`, and hidden directories.
 - Per-file fault isolation: a malformed file is one `error` entry, the walk continues.
@@ -54,10 +57,10 @@ Validate all Markdown files beneath the given paths (default `.`). (FR-011–FR-
   `! notes/b.md  ungoverned (no schema)`, `- README.md  skipped (no frontmatter)`,
   `✗ broken.md  malformed frontmatter: <reason>`), then a summary line with counts.
 - JSON output: the full `LintResult` from [data-model.md](../data-model.md).
-- Exit decision: `1` if any entry has status `invalid` or `error` · `5` if `--schema` itself
-  is unusable, or if nothing at all could be validated (no override given and `summary.checked
-  === 0` while Markdown files were found) · else `0` (ungoverned and skipped entries are
-  reported, not failing).
+- Exit decision, precedence top-down: `1` if any file's result has status `invalid` or `error`
+  · `5` if `--schema` itself is unusable, or if no override was given, `summary.checked === 0`,
+  and no file errored while Markdown files were found · else `0` (ungoverned and skipped files
+  are reported, not failing).
 - Schema attribution: every checked file's result names its governing schema and the authority
   it governs by — `invocation` or `document` (FR-012).
 

@@ -69,10 +69,10 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 1 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T011 [P] [US1] Extend tests/fixtures/splice/ with operation triples (input, operation, expected-output): scalar edit preserving inline comment, edit beside odd spacing, flow-list wholesale replace, block-list wholesale replace, quoted-value edit, field append to end of block, append to empty block, CRLF file edit
+- [ ] T011 [P] [US1] Extend tests/fixtures/splice/ with operation triples (input, operation, expected-output): scalar edit preserving inline comment, edit beside odd spacing, flow-list wholesale replace, block-list wholesale replace, object (flow-mapping) whole-value replace, quoted-value edit, field append to end of block, append to empty block, CRLF file edit
 - [ ] T012 [P] [US1] Write splice-engine unit tests asserting byte-level equality against every fixture triple (Buffer.equals, no string trimming) in tests/unit/splice.test.ts
-- [ ] T013 [P] [US1] Write value parsing/serialization unit tests (YAML scalar typing: `true`/`42`/quoted-string; leading-`[` flow sequence incl. JSON array input; nested/mapping value → UsageError; serialized form round-trips to identical parsed value) in tests/unit/values.test.ts
-- [ ] T014 [P] [US1] Write validation unit tests (Ajv2020 + ajv-formats wiring; translation: enum → `expected: one of …` with allowedValues, required → `field: null`, type mismatch; `allErrors`; unparseable/invalid schema → SchemaInvalidError) in tests/unit/validate.test.ts using tests/fixtures/schemas/
+- [ ] T013 [P] [US1] Write value parsing/serialization unit tests (YAML value typing: `true`/`42`/quoted-string scalars; leading-`[` flow sequence incl. JSON array input; leading-`{` flow mapping incl. JSON object input; unparseable value syntax → UsageError; serialized form round-trips to identical parsed value) in tests/unit/values.test.ts
+- [ ] T014 [P] [US1] Write validation unit tests (Ajv2020 + ajv-formats wiring; translation: enum → `expected: one of …` with allowedValues, required → `field: null`, type mismatch; violations translated correctly through a composed per-type schema (allOf + if/then keyed on `type`); `allErrors`; unparseable/invalid schema → SchemaInvalidError) in tests/unit/validate.test.ts using tests/fixtures/schemas/
 - [ ] T015 [P] [US1] Write resolution unit tests for v0.1 chain without modeline (invocation override → GoverningSchema{authority:'invocation'}; nothing → null; missing/unreadable override file → SchemaUnresolvableError) in tests/unit/resolve.test.ts
 - [ ] T016 [P] [US1] Write atomic-writer unit tests (temp+rename in same dir; verify-before-rename: re-parse equality + line-span diff confinement; induced failures: read-only dir, injected rename failure, corrupted-render simulation → VerificationError/IoError with original byte-identical) in tests/unit/writer.test.ts
 - [ ] T017 [P] [US1] Write setFields orchestration unit tests (multi-field all-or-nothing, validation refusal writes nothing, created fields appended last, `changes[].before/after/created`, `validated`/`bypassed`/`governedBy` state, ValidationError carries violations) in tests/unit/api.set.test.ts
@@ -104,8 +104,8 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 2 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T027 [P] [US2] Create lint fixture tree in tests/fixtures/lint/ (valid files, seeded violations across violation classes, no-frontmatter file, malformed file, nested dirs, `node_modules`/`.git`/hidden dirs that must be ignored)
-- [ ] T028 [P] [US2] Write lint unit tests (recursive `*.md` discovery + ignore set, per-file fault isolation, FileLintResult statuses valid/invalid/ungoverned/skipped-no-frontmatter/error, governedBy attribution, summary counts, ErrorInfo serialization) in tests/unit/lint.test.ts
+- [ ] T027 [P] [US2] Create lint fixture tree in tests/fixtures/lint/ (valid files, seeded violations across violation classes incl. against a composed per-type schema, no-frontmatter file, malformed file, nested dirs, `node_modules`/`.git`/hidden dirs that must be ignored)
+- [ ] T028 [P] [US2] Write lint unit tests (recursive `*.md` discovery + ignore set, explicit file arguments linted directly, exit-precedence edge: all files errored → invalid/error outcome not nothing-validated, per-file fault isolation, FileLintResult statuses valid/invalid/ungoverned/skipped-no-frontmatter/error, governedBy attribution, summary counts, ErrorInfo serialization) in tests/unit/lint.test.ts
 - [ ] T029 [P] [US2] Write CLI integration tests for `fmctl lint` (human per-file lines + summary, `--json` full LintResult, exit 1 on invalid/error, exit 5 on unusable --schema and on nothing-validated, exit 0 with ungoverned+skipped only) in tests/integration/cli-lint.test.ts
 
 ### Implementation for User Story 2
@@ -127,7 +127,7 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 3 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T032 [P] [US3] Write getField unit tests (scalar, list, FieldNotFoundError, NoFrontmatterError, ParseError pass-through) in tests/unit/api.get.test.ts
+- [ ] T032 [P] [US3] Write getField unit tests (scalar, list, object-valued field returned in full as JsonValue, FieldNotFoundError, NoFrontmatterError, ParseError pass-through) in tests/unit/api.get.test.ts
 - [ ] T033 [P] [US3] Write CLI integration tests for `fmctl get` (plain value, flow-list rendering, `--json` GetResult shape, exit 0/3/4) in tests/integration/cli-get.test.ts
 
 ### Implementation for User Story 3
@@ -168,8 +168,9 @@ data fields; URI ref exits 5; modeline survives writes byte-for-byte
 - [ ] T042 [P] Write agent round-trip integration test: scripted get → set --json → lint --json cycle consuming only JSON stdout/stderr + exit codes (SC-004, quickstart scenario 10) in tests/integration/agent-roundtrip.test.ts
 - [ ] T043 [P] Write performance test: generate 1,000 governed files in a temp dir, assert lint wall-clock < 10 s, tagged slow (SC-007, quickstart scenario 11) in tests/integration/perf-lint.test.ts
 - [ ] T044 [P] Write README.md: usage for all three commands, modeline syntax, exit-code table (the documented contract per FR-015), library-consumer example
-- [ ] T045 Execute quickstart.md scenarios 1–9 manually against the built binary and dogfood on the author's real project with ≥20 seeded violations; record results in specs/001-schema-governed-frontmatter/quickstart-results.md (SC-001–SC-006)
-- [ ] T046 Final pass: `npm run build && npm test` green, pre-commit hooks green, no constitution violations (re-read gate table in plan.md)
+- [ ] T045 [P] Write architecture-guard test asserting src/cli sources import from the library only via src/lib/index.ts (scan import statements — zero new dependencies, Constitution Principle VII) in tests/unit/architecture.test.ts
+- [ ] T046 Execute quickstart.md scenarios 1–9 manually against the built binary and dogfood on the author's real project with ≥20 seeded violations; record results in specs/001-schema-governed-frontmatter/quickstart-results.md (SC-001–SC-006)
+- [ ] T047 Final pass: `npm run build && npm test` green, pre-commit hooks green, no constitution violations (re-read gate table in plan.md)
 
 ---
 
@@ -196,7 +197,7 @@ data fields; URI ref exits 5; modeline survives writes byte-for-byte
 - Foundational: T005, T007, T008 together; T006 after T005; T009 after T007/T008
 - US1: T011–T017 all parallel (different files); T018–T023 sequenced by module dependency; T024 parallel with T018–T023
 - US3 can start the moment Phase 2 completes, fully parallel with US1
-- Polish: T042–T044 parallel
+- Polish: T042–T045 parallel
 
 ---
 
@@ -214,6 +215,12 @@ Task: "T016 writer tests in tests/unit/writer.test.ts"
 ---
 
 ## Implementation Strategy
+
+### Branching & Review Gate
+
+All implementation work lands on feature branch `001-schema-governed-frontmatter`. Merging to
+`main` requires a PR reviewed against this spec (FR coverage via the code-reviewer skill) —
+the constitution's Development Workflow gate.
 
 ### MVP First (User Story 1 Only)
 

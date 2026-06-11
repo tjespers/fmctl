@@ -104,7 +104,7 @@ printf -- '---\nstatus: [unclosed\n---\nx\n' > docs/broken.md
 fmctl lint docs --schema schema.json; echo $?
 # ✗ docs/bad.md (violation), ✗ docs/broken.md (malformed), - docs/README.md (skipped),
 # ✓ ok.md counted; summary line; exit 1
-fmctl lint docs --schema schema.json --json   # full LintReport JSON
+fmctl lint docs --schema schema.json --json   # full LintResult JSON
 ```
 
 ## Scenario 8 — modeline governance, external-standard file (US4, SC-006)

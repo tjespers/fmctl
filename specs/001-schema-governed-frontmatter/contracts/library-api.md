@@ -16,19 +16,20 @@ Reads one top-level field. (FR-001)
 interface GetResult {
   file: string;            // absolute path
   field: string;
-  value: Scalar | ScalarList;
+  value: JsonValue;        // whole value: scalar, list, or object
 }
 type Scalar = string | number | boolean | null;
-type ScalarList = Scalar[];
+type JsonValue = Scalar | JsonValue[] | { [key: string]: JsonValue };
 ```
 
 Throws: `FileNotFoundError`, `NoFrontmatterError`, `ParseError`, `DuplicateKeyError`,
 `NotRepresentableError`, `FieldNotFoundError`.
 
-### `setFields(filePath: string, changes: Record<string, Scalar | ScalarList>, options?: SetOptions): Promise<SetResult>`
+### `setFields(filePath: string, changes: Record<string, JsonValue>, options?: SetOptions): Promise<SetResult>`
 
 Updates and/or creates one or more top-level fields atomically — all changes validate and land
-together, or nothing is written. (FR-002–FR-007)
+together, or nothing is written. Values are whole-value replacements (scalar, list, or object);
+nested-path addressing is unsupported. (FR-002–FR-007)
 
 ```ts
 interface SetOptions {
@@ -37,7 +38,7 @@ interface SetOptions {
 }
 interface SetResult {
   file: string;
-  changes: Array<{ field: string; before: Scalar | ScalarList | undefined; after: Scalar | ScalarList; created: boolean }>;
+  changes: Array<{ field: string; before: JsonValue | undefined; after: JsonValue; created: boolean }>;
   validated: boolean;       // false when bypassed or ungoverned
   bypassed: boolean;        // true when validation was explicitly bypassed (FR-006)
   governedBy: GoverningSchema | null; // null = ungoverned
@@ -49,7 +50,7 @@ The FR-013 unvalidated-write notice is presentation, composed by the CLI from
 
 Throws: everything `getField` throws (except `FieldNotFoundError`), plus `ValidationError`
 (nothing written), `SchemaUnresolvableError`, `SchemaInvalidError`, `VerificationError`
-(original restored), `IoError`, `UsageError` (e.g. nested/mapping value supplied).
+(original restored), `IoError`, `UsageError` (e.g. unparseable `field=value` syntax).
 
 ### `lintPaths(paths: string[], options?: LintOptions): Promise<LintReport>`
 
@@ -80,7 +81,7 @@ public surface. (FR-008)
 
 - Types: `GetResult`, `SetOptions`, `SetResult`, `LintOptions`, `LintResult`,
   `FileLintResult`, `ErrorInfo`, `Violation`, `GoverningSchema`, `Modeline`, `SchemaRef`,
-  `Scalar`, `ScalarList`.
+  `Scalar`, `JsonValue`.
 - Errors: `FmctlError` (abstract base: `code: string`, `exitCode: number`, `file?: string`,
   `field?: string`), `UsageError`, `NotFoundError`, `FileNotFoundError`, `NoFrontmatterError`,
   `FieldNotFoundError`, `ParseError`, `DuplicateKeyError`, `NotRepresentableError`,

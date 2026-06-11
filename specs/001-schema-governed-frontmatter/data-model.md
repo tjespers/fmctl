@@ -34,7 +34,7 @@ A top-level frontmatter entry addressed by name.
 | Field | Type | Notes |
 |---|---|---|
 | `name` | `string` | top-level key |
-| `value` | `Scalar \| ScalarList` | `Scalar = string \| number \| boolean \| null` |
+| `value` | `JsonValue` | whole value of the entry; `JsonValue = Scalar \| JsonValue[] \| { [key: string]: JsonValue }` with `Scalar = string \| number \| boolean \| null` |
 | `valueRange` | `[start, end]` | byte offsets of the value node within `frontmatter.text` (from `node.range`) |
 | `entryLines` | `[firstLine, lastLine]` | 1-based line span of the whole entry — the only lines a write to this field may alter |
 
@@ -140,8 +140,8 @@ NotFound...                            (nothing written)    line-span diff confi
 - **rendered**: new frontmatter text produced purely by splicing value ranges / appending new
   entry lines; body bytes concatenated untouched.
 - **validated**: complete post-edit frontmatter data validated against the governing schema
-  (whole-document, FR-005); bypass flag or absent schema skips this state (with stderr notice
-  when unvalidated, FR-013).
+  (whole-document, FR-005); bypass flag or absent schema skips this state (the CLI emits the
+  FR-013 unvalidated-write notice — the library only carries the state).
 - **staged → committed**: verification happens on the temp file *before* `rename`, so the
   original is never replaced by unverified bytes (research.md R7).
 
