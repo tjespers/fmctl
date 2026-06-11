@@ -18,7 +18,7 @@ The parsed representation of one Markdown file. Immutable once loaded; edits pro
 | `frontmatter.text` | `string` | raw text between (exclusive of) the `---` delimiter lines |
 | `frontmatter.range` | `[start, end]` | byte offsets of `frontmatter.text` within `raw` |
 | `body` | `string` | everything after the closing delimiter line — **opaque, never parsed** |
-| `data` | `Record<string, unknown>` | frontmatter parsed to plain data (JSON-compatible) |
+| `data` | `Record<string, JsonValue>` | frontmatter parsed to plain data (JSON-representable, see `Field`) |
 | `modeline` | `Modeline \| null` | parsed modeline if present |
 
 **Invariants**:

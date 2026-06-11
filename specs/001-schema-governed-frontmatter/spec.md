@@ -31,6 +31,7 @@ A developer — or an AI agent acting on his behalf — changes the state record
 5. **Given** multiple field=value pairs in one invocation, **When** the command runs, **Then** validation considers the complete resulting frontmatter, and either all changes are applied or none are.
 6. **Given** the validation-bypass option, **When** the user sets a value the schema forbids, **Then** the write proceeds — while surgical-edit behavior and post-write verification still fully apply.
 7. **Given** a file with malformed frontmatter, **When** the user attempts any edit, with or without the bypass option, **Then** the command refuses, nothing is modified, and the error names the file and the parse problem.
+8. **Given** an object-valued field (or a field being created), **When** the user replaces it with a new object value, **Then** the resulting frontmatter contains exactly the new object as the field's whole value, it validates against the schema, and the rest of the file is unchanged.
 
 ---
 

@@ -102,11 +102,13 @@ form so the choices stay auditable.
 ## R6. CLI value parsing: YAML scalar / flow sequence
 
 - **Decision**: For `field=value`, the value substring is parsed with the same `yaml` library:
-  values starting with `[` parse as a YAML flow sequence (lists — JSON arrays are valid YAML
-  flow, agents can emit JSON unchanged); anything else parses as a single YAML scalar
-  (`true` → boolean, `42` → number, quoted → string). Nested/mapping values are rejected as
-  unsupported in v0.1. Serialization of new values into the splice uses YAML flow style for
-  lists and plain/quoted scalars chosen to round-trip the parsed value exactly.
+  values starting with `[` parse as a YAML flow sequence, values starting with `{` parse as a
+  YAML flow mapping (JSON arrays and objects are valid YAML flow, agents can emit JSON
+  unchanged); anything else parses as a single YAML scalar (`true` → boolean, `42` → number,
+  quoted → string). Every write is a whole-value replacement of a top-level field;
+  nested-path addressing is unsupported in v0.1. Serialization of new values into the splice
+  uses YAML flow style for collections and plain/quoted scalars chosen to round-trip the
+  parsed value exactly.
 - **Rationale**: One parser, one set of quoting rules (YAML's own), zero bespoke syntax; the
   schema then enforces expected types. Matches the spec assumption verbatim.
 - **Alternatives considered**: comma-splitting (breaks on values containing commas, ambiguous
@@ -134,8 +136,9 @@ form so the choices stay auditable.
 
 - **Decision**: Recursive discovery via `node:fs` (`readdir` with `recursive: true`, available
   since Node 18.17/20), filtering `*.md`, with a fixed default ignore set (`node_modules`,
-  `.git`, hidden directories). Per-file processing is fault-isolated: one file's error becomes
-  a report entry, never an abort. Report assembled as data; rendering (human/JSON) lives in
+  `.git`, hidden directories); explicit file arguments are linted directly without walking.
+  Per-file processing is fault-isolated: one file's error becomes a report entry, never an
+  abort. Report assembled as data; rendering (human/JSON) lives in
   the CLI layer.
 - **Rationale**: At the envelope (≤ low thousands of files), built-in recursive readdir
   single-threaded is orders of magnitude inside the 10 s budget — no globbing or worker deps

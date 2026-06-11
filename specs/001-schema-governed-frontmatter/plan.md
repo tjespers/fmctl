@@ -92,7 +92,7 @@ src/
 │   ├── errors.ts        # typed error hierarchy (exit-code-mapped)
 │   ├── document.ts      # frontmatter document model: delimiter split, parse, node location
 │   ├── splice.ts        # splice engine: byte-range edits on original source text
-│   ├── values.ts        # field-value parsing (YAML scalar / flow sequence) & serialization
+│   ├── values.ts        # field-value parsing (YAML scalar / flow collection) & serialization
 │   ├── writer.ts        # atomic write + post-write verification + restore-on-anomaly
 │   ├── modeline.ts      # modeline scan/parse (`# fmctl: $schema=<ref>`)
 │   ├── resolve.ts       # schema resolution chain: override → modeline → none
