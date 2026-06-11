@@ -76,10 +76,10 @@ A developer brings a file that follows an external standard — one whose schema
 
 **Acceptance Scenarios**:
 
-1. **Given** a file whose frontmatter block contains a modeline comment referencing a schema, **When** any command needs the file's governing schema, **Then** the modeline's schema is used, taking precedence over any project config.
-2. **Given** a standalone file outside any project, **When** it carries a modeline, **Then** validation works with no project config present.
-3. **Given** a file in a project without a modeline, **When** any command needs its governing schema, **Then** the project config's schema applies.
-4. **Given** a per-invocation schema override, **When** supplied, **Then** it takes precedence over both modeline and project config.
+1. **Given** a file whose frontmatter block contains a modeline comment referencing a schema, **When** any command needs the file's governing schema and no per-invocation override is supplied, **Then** the modeline's schema is used.
+2. **Given** a standalone file anywhere on disk, **When** it carries a modeline, **Then** validation works with no project context or configuration of any kind.
+3. **Given** a file with no modeline and no per-invocation override, **When** a write occurs, **Then** it proceeds unvalidated with a diagnostic notice, and lint reports the file as ungoverned.
+4. **Given** a per-invocation schema override, **When** supplied, **Then** it takes precedence over any modeline.
 5. **Given** any write to a file carrying a modeline, **When** the write completes, **Then** the modeline comment is preserved exactly, and no editing command exists that can alter it as data.
 6. **Given** a modeline referencing a schema document that does not exist or cannot be read, **When** any command needs it, **Then** the command refuses loudly, naming the file, the modeline reference, and the problem.
 
@@ -108,12 +108,12 @@ A developer brings a file that follows an external standard — one whose schema
 - **FR-005**: Writes MUST validate the file's complete resulting frontmatter against its governing schema before any disk modification; on violation nothing is written, and the error names the file, the field, the violating value, and what the schema would accept.
 - **FR-006**: A validation-bypass option MUST skip schema validation only; the surgical-edit guarantee, post-write verification, and refusal of malformed files MUST NOT be bypassable by any option.
 - **FR-007**: Every write MUST be atomic and self-verified: the system re-reads its own output, confirms the data matches the intended change, and confirms the change is confined to the expected fields; on any anomaly the original content is restored exactly and the command fails with a non-zero exit code.
-- **FR-008**: The system MUST resolve a file's governing schema in this precedence order: per-invocation override, in-file modeline, project configuration discovered by walking up from the target file, none.
+- **FR-008**: The system MUST resolve a file's governing schema in this precedence order: per-invocation override, in-file modeline, none. No ambient or global configuration is consulted in v0.1.
 - **FR-009**: The modeline MUST be a YAML comment inside the frontmatter block: invisible to schema validation and to external consumers of the file's data, never readable or writable as a field through the system's commands, and preserved exactly by all writes.
-- **FR-010**: Project configuration MUST be a single small file at the project root referencing the schema document by local path; distinct directory trees resolve independently, with no global or user-level state involved.
+- **FR-010**: Modeline schema references MUST support absolute filesystem paths and file-relative paths (resolved against the referencing file's directory). URI references (e.g. `https://…`) MUST be recognized and rejected with a distinct error stating they are reserved for a future version.
 - **FR-011**: Lint MUST walk all Markdown files recursively beneath a given path, validate each against its resolved schema, report files without frontmatter as skipped, and report files with malformed frontmatter as errors without halting the remaining files.
 - **FR-012**: The lint report MUST state, per file: which schema governed it (or why it was skipped or errored), and each violation with its field and what would have been valid.
-- **FR-013**: When no schema resolves for a file: read and edit commands MUST proceed without validation; lint MUST fail with a distinct error.
+- **FR-013**: When no schema resolves for a file: reads proceed normally; writes proceed without validation but MUST emit a diagnostic notice that the write was unvalidated; lint MUST report such files as ungoverned, and MUST fail with a distinct error when nothing at all could be validated (no override supplied and no file carries a modeline).
 - **FR-014**: Every command MUST offer a machine-readable (JSON) output mode; results go to standard output and diagnostics to standard error.
 - **FR-015**: Every failure class MUST map to a distinct, documented exit code, and identical inputs MUST produce identical outcomes.
 - **FR-016**: The system MUST refuse to read best-effort or write to: malformed frontmatter, frontmatter with duplicate keys, frontmatter not representable in the validation data model, and operations requiring an unreadable or invalid schema document — in each case naming the file and the specific problem.
@@ -126,9 +126,8 @@ A developer brings a file that follows an external standard — one whose schema
 - **Frontmatter block**: the delimited YAML region at the top of a document; the unit the system reads, edits, and validates.
 - **Field**: a top-level entry in the frontmatter holding a scalar or a list; the unit of read and write operations.
 - **Modeline**: a comment inside the frontmatter block associating the file with a schema; metadata about the document, never part of its data.
-- **Project configuration**: a small per-project file at the project root that names the project's schema document.
 - **Schema document**: a standard JSON Schema describing what valid frontmatter looks like, possibly varying by the file's declared type via composition.
-- **Schema association**: the outcome of resolution for a given file — which schema governs it and by which mechanism (override, modeline, project config, none).
+- **Schema association**: the outcome of resolution for a given file — which schema governs it and by which mechanism (override, modeline, none).
 - **Violation**: a single way in which a file's frontmatter fails its schema: the field, the offending value, and what would have been accepted.
 - **Lint report**: the per-file results of validating a tree: checked/skipped/errored status, governing schema, and any violations.
 
@@ -151,7 +150,8 @@ A developer brings a file that follows an external standard — one whose schema
 - Edits target top-level fields only in v0.1; reading a structured field returns its full value in machine-readable mode, but nested-path editing is unsupported and fails distinctly.
 - Read and edit commands operate on one file per invocation; folder-scale operation is lint's job in v0.1.
 - A Markdown file with no frontmatter block cannot be read from or written to in v0.1 (distinct error); creating frontmatter blocks from scratch is deferred.
-- The exact modeline syntax and the project configuration filename are design-phase decisions; one modeline per file and one schema reference per project apply in v0.1.
+- The exact modeline syntax is a design-phase decision; one modeline per file applies in v0.1. Relative modeline references intentionally travel with the file (moving a file without its schema breaks the reference — accepted for v0.1; stable URI references arrive with the future configuration/catalog feature).
+- v0.1 has no configuration file concept at all; in practice, project-wide schema enforcement is achieved by supplying the per-invocation schema override (e.g. via a task runner or agent harness wrapper).
 - One current, widely supported JSON Schema draft is targeted (selected at design time); schema documents are local files, and a schema split across multiple documents (cross-file references) is out of scope for v0.1.
 - Single user on a local filesystem; concurrent writers to the same file are out of scope.
 - Success criterion SC-003 is evaluated by dogfooding on the author's real Markdown-state project.
@@ -161,8 +161,7 @@ A developer brings a file that follows an external standard — one whose schema
 - Folder-wide querying of frontmatter ("query the folder like a database").
 - Link/dependency-graph analysis and blast-radius reporting.
 - Item-level list editing (append/remove one element); only whole-list replacement is supported.
-- Remote schema URLs and published-schema resolution; cross-file schema references.
-- Glob-to-schema mappings and cascading/nested project configurations.
-- Schema-association policy controls (e.g. forbidding modeline overrides project-wide).
+- Remote schema fetching and published-schema resolution; cross-file schema references. (URI references in modelines are syntactically reserved and rejected in v0.1.)
+- Any project configuration concept: config files, ambient schema discovery (upward walk), schema catalogs, glob-to-schema mappings, cascading configurations, and schema-association policy controls — all deferred to a dedicated future configuration spec.
 - `$schema` (or any schema pointer) as a frontmatter data field.
 - Creating frontmatter blocks in files that have none.
