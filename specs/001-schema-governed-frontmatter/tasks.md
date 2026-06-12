@@ -85,9 +85,10 @@ invalid edit leaves the file byte-identical with an actionable error
 - [ ] T021 [US1] Implement ajv wrapper + violation translation in src/lib/validate.ts (green T014)
 - [ ] T022 [US1] Implement atomic verify-or-revert writer in src/lib/writer.ts (green T016)
 - [ ] T023 [US1] Implement setFields orchestration (load → edit → validate → stage → verify → commit per data-model.md pipeline) and export via src/lib/index.ts (green T017)
-- [ ] T024 [P] [US1] Write CLI integration tests for `fmctl set` driving the built binary via node:child_process (JSON success shape with before/after/governedBy, violation refusal exit 1 + stderr JSON with violations[], `--no-validate`, unvalidated-write stderr notice, exit codes 2/3/4/5/6, dotted field name exit 2 with `code` `nested-path-unsupported`, value syntax incl. flow lists) in tests/integration/cli-set.test.ts — observe failing
+- [ ] T024 [P] [US1] Write CLI integration tests for `fmctl set` driving the built binary via node:child_process (JSON success shape with before/after/governedBy, violation refusal exit 1 + stderr JSON with violations[], `--no-validate`, unvalidated-write stderr notice, exit codes 2/3/4/5/6 plus 7 on filesystem failure (e.g. read-only target directory), dotted field name exit 2 with `code` `nested-path-unsupported`, value syntax incl. flow lists) in tests/integration/cli-set.test.ts — observe failing
 - [ ] T025 [US1] Implement CLI scaffold: commander program in src/cli/main.ts and human/JSON renderers + FmctlError→exit-code mapping in src/cli/output.ts
 - [ ] T026 [US1] Implement `set` command (field=value parsing, --schema, --no-validate, --json) in src/cli/commands/set.ts (green T024)
+- [ ] T045 [P] Write architecture-guard test asserting src/cli sources import from the library only via src/lib/index.ts (scan import statements — zero new dependencies, Constitution Principle VII) in tests/unit/architecture.test.ts — cross-cutting, ordered here so the boundary is guarded from the first CLI code
 
 **Checkpoint**: MVP — quickstart scenarios 2–6 pass end-to-end
 
@@ -106,7 +107,7 @@ invalid edit leaves the file byte-identical with an actionable error
 
 - [ ] T027 [P] [US2] Create lint fixture tree in tests/fixtures/lint/ (valid files, seeded violations across violation classes incl. against a composed per-type schema, no-frontmatter file, malformed file, nested dirs, a hidden dir (e.g. `.docs/`) with a governed file that MUST be walked, gitignored content: root and nested ignore files with a dir-only and a negation pattern covering a violating file that must not be reported). Ignore files are stored as `_gitignore` and renamed to `.gitignore` when the corpus helper stages the tree into a temp dir — a real `.gitignore` in fixtures would make git ignore the fixtures themselves; extend tests/helpers/corpus.ts with this staging (which also exercises the no-git-repo case, per research R8)
 - [ ] T028 [P] [US2] Write lint unit tests (recursive `*.md` discovery honoring `.gitignore` — root and nested files, dir-only and negation patterns, ignored dirs pruned not descended, `.git` always skipped, hidden dirs walked; explicit file arguments linted directly even when gitignored; exit-precedence edge: all files errored → invalid/error outcome not nothing-validated, per-file fault isolation, FileLintResult statuses valid/invalid/ungoverned/skipped-no-frontmatter/error, governedBy attribution, summary counts, ErrorInfo serialization) in tests/unit/lint.test.ts
-- [ ] T029 [P] [US2] Write CLI integration tests for `fmctl lint` (human per-file lines + summary, `--json` full LintResult, exit 1 on invalid/error, exit 5 on unusable --schema and on nothing-validated, exit 0 with ungoverned+skipped only) in tests/integration/cli-lint.test.ts
+- [ ] T029 [P] [US2] Write CLI integration tests for `fmctl lint` (human per-file lines + summary, `--json` full LintResult, exit 1 on invalid/error, exit 5 on unusable --schema and on nothing-validated, exit 0 when ungoverned and skipped files appear alongside at least one validated file, default path `.` when invoked with no path arguments) in tests/integration/cli-lint.test.ts
 
 ### Implementation for User Story 2
 
@@ -127,7 +128,7 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 3 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T032 [P] [US3] Write getField unit tests (scalar, list, object-valued field returned in full as JsonValue, FieldNotFoundError, NoFrontmatterError, ParseError pass-through) in tests/unit/api.get.test.ts
+- [ ] T032 [P] [US3] Write getField unit tests (scalar, list, object-valued field returned in full as JsonValue, FieldNotFoundError incl. on an empty frontmatter block, NoFrontmatterError, ParseError pass-through) in tests/unit/api.get.test.ts
 - [ ] T033 [P] [US3] Write CLI integration tests for `fmctl get` (plain value, flow-list rendering, `--json` GetResult shape, exit 0/3/4) in tests/integration/cli-get.test.ts
 
 ### Implementation for User Story 3
@@ -168,7 +169,6 @@ data fields; URI ref exits 5; modeline survives writes byte-for-byte
 - [ ] T042 [P] Write agent round-trip integration test: scripted get → set --json → lint --json cycle consuming only JSON stdout/stderr + exit codes (SC-004, quickstart scenario 10) in tests/integration/agent-roundtrip.test.ts
 - [ ] T043 [P] Write performance test: generate 1,000 governed files in a temp dir, assert lint wall-clock < 10 s, tagged slow (SC-007, quickstart scenario 11) in tests/integration/perf-lint.test.ts
 - [ ] T044 [P] Write README.md: usage for all three commands, modeline syntax, exit-code table (the documented contract per FR-015), library-consumer example
-- [ ] T045 [P] Write architecture-guard test asserting src/cli sources import from the library only via src/lib/index.ts (scan import statements — zero new dependencies, Constitution Principle VII) in tests/unit/architecture.test.ts
 - [ ] T046 Execute quickstart.md scenarios 1–9 manually against the built binary and dogfood on the author's real project with ≥20 seeded violations; record results in specs/001-schema-governed-frontmatter/quickstart-results.md (SC-001–SC-006)
 - [ ] T047 Final pass: `npm run build && npm test` green, pre-commit hooks green, no constitution violations (re-read gate table in plan.md)
 
@@ -195,9 +195,9 @@ data fields; URI ref exits 5; modeline survives writes byte-for-byte
 
 - Setup: T002–T004 after T001
 - Foundational: T005, T007, T008 together; T006 after T005; T009 after T007/T008
-- US1: T011–T017 all parallel (different files); T018–T023 sequenced by module dependency; T024 parallel with T018–T023
+- US1: T011–T017 all parallel (different files); T018–T023 sequenced by module dependency; T024 parallel with T018–T023; T045 any time after T025
 - US3 can start the moment Phase 2 completes, fully parallel with US1
-- Polish: T042–T045 parallel
+- Polish: T042–T044 parallel
 
 ---
 

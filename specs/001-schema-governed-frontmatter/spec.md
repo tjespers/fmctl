@@ -163,6 +163,7 @@ A developer brings a file that follows an external standard — one whose schema
 - The exact modeline syntax is a design-phase decision; one modeline per file applies in v0.1. Relative modeline references intentionally travel with the file (moving a file without its schema breaks the reference — accepted for v0.1; stable URI references arrive with the future configuration/catalog feature).
 - v0.1 has no configuration file concept at all; in practice, project-wide schema enforcement is achieved by supplying the per-invocation schema override (e.g. via a task runner or agent harness wrapper).
 - One current, widely supported JSON Schema draft is targeted (selected at design time); schema documents are local files, and a schema split across multiple documents (cross-file references) is out of scope for v0.1.
+- A "Markdown file", for lint discovery, is a file with the `.md` extension; other Markdown extensions (`.markdown`, `.mdx`) are out of scope for v0.1.
 - Lint discovery honors `.gitignore` files encountered within the linted tree — no git-repo detection, no global or repo-local exclude files (`.git/info/exclude`), and linting a subdirectory does not see a parent directory's `.gitignore` (collect-upward arrives with the future configuration spec). The `.git` directory is always skipped.
 - Single user on a local filesystem; concurrent writers to the same file are out of scope.
 - Success criterion SC-003 is evaluated by dogfooding on the author's real Markdown-state project.
