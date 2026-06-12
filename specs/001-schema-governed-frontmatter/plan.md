@@ -1,6 +1,6 @@
 # Implementation Plan: Schema-Governed Frontmatter Management
 
-**Branch**: `main` | **Date**: 2026-06-11 | **Spec**: [spec.md](./spec.md)
+**Branch**: `001-schema-governed-frontmatter` | **Date**: 2026-06-11 | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `/specs/001-schema-governed-frontmatter/spec.md`
 
@@ -21,8 +21,9 @@ per-invocation `--schema` override → in-file modeline comment → none (no con
 **Language/Version**: TypeScript 5.x, `strict` mode, ESM-only; Node.js ≥ 22 (developed on 25)
 
 **Primary Dependencies**: `yaml` 2.9.x (parse-to-locate only), `ajv` 8.x + `ajv-formats`
-(JSON Schema draft 2020-12), `commander` (CLI argument parsing). Dev: `typescript`, `vitest`.
-No other runtime dependencies; walking and process control use `node:fs`/`node:child_process`.
+(JSON Schema draft 2020-12), `commander` (CLI argument parsing), `ignore` (gitignore-semantics
+matcher for lint discovery). Dev: `typescript`, `vitest`. No other runtime dependencies;
+walking and process control use `node:fs`/`node:child_process`.
 
 **Storage**: local filesystem only — Markdown files edited in place via temp-file + rename
 
@@ -41,7 +42,8 @@ comfortably sufficient at the envelope (hundreds to low thousands of files)
 **Constraints**: byte-level conservatism — a write may alter only the lines of the fields it
 was asked to change (no re-serialization of untouched content); writes are atomic and
 self-verified with restore-on-anomaly; malformed input is refused, never repaired; every
-failure class is a typed, exported error mapped 1:1 to a documented exit code
+failure class is a typed, exported error carrying a stable code, with failure families mapped
+to distinct documented exit codes
 
 **Scale/Scope**: 3 CLI commands (`get`, `set`, `lint`), ~9 library modules, hundreds to low
 thousands of Markdown files per invocation
@@ -54,10 +56,10 @@ thousands of Markdown files per invocation
 |---|-----------|-------------------|--------|
 | I | Byte-Level Conservatism | Splice engine edits source text via parser-located byte ranges; body split off as opaque bytes and never parsed; no write path may call whole-document serialization (`doc.toString()` proven normalizing in 2026-06-10 spike) | PASS |
 | II | Verify-or-Revert Writes | Dedicated atomic writer: temp file + rename; post-write re-parse asserting data-matches-intent and diff confined to expected fields; anomaly → original restored, distinct exit code 6 | PASS |
-| III | Refuse Loudly | Typed error hierarchy in the library (parse, duplicate-key, no-frontmatter, field-not-found, schema-unresolvable, schema-invalid, validation, verification, I/O), each mapped 1:1 to documented exit codes; no best-effort reads; URI modelines rejected with a distinct reserved error | PASS |
+| III | Refuse Loudly | Typed error hierarchy in the library (parse, duplicate-key, no-frontmatter, field-not-found, schema-unresolvable, schema-invalid, validation, verification, I/O), each carrying a stable `code`, with failure families mapped to distinct documented exit codes (constitution v1.0.1); no best-effort reads; URI modelines and dotted field names rejected with distinct codes | PASS |
 | IV | Test-First, No Exceptions | TDD workflow enforced in task ordering (tests authored and observed failing before implementation); golden corpus with byte-diff assertions is the executable form of FR-004 | PASS |
 | V | Agent-First Ergonomics | `--json` on every command; results → stdout, diagnostics → stderr; exit-code table is a documented contract; errors carry file/field/value/expected | PASS |
-| VI | Boring Code, Lean Deps | 4 runtime deps, each justified in [research.md](./research.md): `yaml` (only maintained TS parser exposing node byte ranges), `ajv`+`ajv-formats` (richest error params for the translation layer), `commander` (boring standard). Walker/process needs met by Node built-ins — no globby, no execa | PASS |
+| VI | Boring Code, Lean Deps | 5 runtime deps, each justified in [research.md](./research.md): `yaml` (only maintained TS parser exposing node byte ranges), `ajv`+`ajv-formats` (richest error params for the translation layer), `commander` (boring standard), `ignore` (zero-dep ecosystem-standard gitignore matcher — hand-rolling gitignore semantics is the bug-farm this principle warns about). Walking/process needs met by Node built-ins — no globby, no execa | PASS |
 | VII | Library-First, Prove Before Grow | All capability in `src/lib/` behind a single public entry; `src/cli/` imports only that entry (FR-018); no query/graph/config speculation — v0.1 resolution chain is flag → modeline → none | PASS |
 
 **Technical Constraints check**: TS strict ✓, Node on Linux+macOS ✓, dual surface (exports +
@@ -109,7 +111,8 @@ src/
 tests/
 ├── fixtures/            # golden corpus — byte-exact; excluded from mutating pre-commit hooks
 │   ├── splice/          # (input, operation, expected-output) triples
-│   ├── lint/            # mixed folders: valid/invalid/malformed/no-frontmatter/modeline
+│   ├── lint/            # mixed folders: valid/invalid/malformed/no-frontmatter/gitignored
+│   ├── modeline/        # modeline-governed, external-standard, URI/broken-ref variants
 │   └── schemas/         # JSON Schema documents used by fixtures
 ├── unit/                # per-module TDD tests (mirror src/lib structure)
 ├── integration/         # built CLI driven via child_process: JSON + exit codes only

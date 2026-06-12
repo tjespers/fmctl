@@ -10,7 +10,8 @@ of the contract. Anything not listed here is internal and may change freely.
 
 ### `getField(filePath: string, field: string): Promise<GetResult>`
 
-Reads one top-level field. (FR-001)
+Reads one top-level field. Field names are literal top-level keys — no nested addressing; a
+dotted name is looked up literally. (FR-001)
 
 ```ts
 interface GetResult {
@@ -29,7 +30,8 @@ Throws: `FileNotFoundError`, `NoFrontmatterError`, `ParseError`, `DuplicateKeyEr
 
 Updates and/or creates one or more top-level fields atomically — all changes validate and land
 together, or nothing is written. Values are whole-value replacements (scalar, list, or object);
-nested-path addressing is unsupported. (FR-002–FR-007)
+nested-path addressing is unsupported — a field name containing `.` is rejected with
+`UsageError` (`code` `nested-path-unsupported`). (FR-002–FR-007)
 
 ```ts
 interface SetOptions {
@@ -50,12 +52,15 @@ The FR-013 unvalidated-write notice is presentation, composed by the CLI from
 
 Throws: everything `getField` throws (except `FieldNotFoundError`), plus `ValidationError`
 (nothing written), `SchemaUnresolvableError`, `SchemaInvalidError`, `VerificationError`
-(original restored), `IoError`, `UsageError` (e.g. unparseable `field=value` syntax).
+(original restored), `IoError`, `UsageError` (e.g. unparseable `field=value` syntax, dotted
+field name).
 
-### `lintPaths(paths: string[], options?: LintOptions): Promise<LintReport>`
+### `lintPaths(paths: string[], options?: LintOptions): Promise<LintResult>`
 
-Walks Markdown files and validates each against its resolved schema. Per-file fault isolation —
-this function only throws for setup-level failures. (FR-011–FR-013)
+Walks Markdown files and validates each against its resolved schema. Directory walking honors
+`.gitignore` files within the walked tree and always skips `.git`; explicitly listed file
+arguments are never ignored. Per-file fault isolation — this function only throws for
+setup-level failures. (FR-011–FR-013)
 
 ```ts
 interface LintOptions {

@@ -93,9 +93,10 @@ form so the choices stay auditable.
   | 6 | `VerificationError` | post-write verification failed, original restored |
   | 7 | `IoError` | filesystem failures outside the verify path |
 
-- **Rationale**: Constitution Principle III requires the 1:1 mapping; grouping related
-  not-found conditions under one exit code keeps the table memorizable for agents while the
-  JSON error `code` field carries the precise class.
+- **Rationale**: Constitution Principle III (v1.0.1) requires a distinct exported error type
+  per failure class with family-level exit codes; grouping related conditions under one exit
+  code keeps the table memorizable for agents while the JSON error `code` field carries the
+  precise class.
 - **Alternatives considered**: one generic non-zero exit (useless to agents); errno-style
   large code space (over-engineered for 3 commands).
 
@@ -106,9 +107,11 @@ form so the choices stay auditable.
   YAML flow mapping (JSON arrays and objects are valid YAML flow, agents can emit JSON
   unchanged); anything else parses as a single YAML scalar (`true` → boolean, `42` → number,
   quoted → string). Every write is a whole-value replacement of a top-level field;
-  nested-path addressing is unsupported in v0.1. Serialization of new values into the splice
-  uses YAML flow style for collections and plain/quoted scalars chosen to round-trip the
-  parsed value exactly.
+  nested-path addressing is unsupported in v0.1 — a field name containing `.` is rejected
+  with `UsageError` code `nested-path-unsupported` (writing literal dotted keys is deferred
+  along with nested addressing, keeping the rejection unambiguous; reads look field names up
+  literally). Serialization of new values into the splice uses YAML flow style for
+  collections and plain/quoted scalars chosen to round-trip the parsed value exactly.
 - **Rationale**: One parser, one set of quoting rules (YAML's own), zero bespoke syntax; the
   schema then enforces expected types. Matches the spec assumption verbatim.
 - **Alternatives considered**: comma-splitting (breaks on values containing commas, ambiguous
@@ -132,20 +135,38 @@ form so the choices stay auditable.
   is unverified); write-in-place with backup file (litter, non-atomic); fsync ceremony beyond
   rename (out of proportion for v0.1's single-user envelope — noted as future hardening).
 
-## R8. Lint walker: Node built-ins only
+## R8. Lint walker: per-directory walk honoring `.gitignore`
 
-- **Decision**: Recursive discovery via `node:fs` (`readdir` with `recursive: true`, available
-  since Node 18.17/20), filtering `*.md`, with a fixed default ignore set (`node_modules`,
-  `.git`, hidden directories); explicit file arguments are linted directly without walking.
-  Per-file processing is fault-isolated: one file's error becomes a report entry, never an
-  abort. Report assembled as data; rendering (human/JSON) lives in
+- **Decision**: Recursive discovery via a per-directory `node:fs` `readdir` walk that prunes
+  ignored directories as it descends, filtering `*.md`. Ignore rules come from `.gitignore`
+  files encountered in the walked tree (the lint root and below, including nested ones),
+  applied with the `ignore` package (gitignore-spec matcher); the `.git` directory is always
+  skipped; there is no other built-in ignore and no git-repo detection — `.gitignore` files
+  are honored wherever found, repo or not. Explicit file arguments are linted directly,
+  ignore rules never applied. Per-file processing is fault-isolated: one file's error becomes
+  a report entry, never an abort. Report assembled as data; rendering (human/JSON) lives in
   the CLI layer.
-- **Rationale**: At the envelope (≤ low thousands of files), built-in recursive readdir
-  single-threaded is orders of magnitude inside the 10 s budget — no globbing or worker deps
-  (Principle VI). Fault isolation implements US2 acceptance scenario 4.
-- **Alternatives considered**: `globby`/`fast-glob` (capability already in Node built-ins);
-  worker-thread parallelism (no measured problem; constitution forbids speculative
-  optimization).
+- **Rationale**: v0.1's only project-wide mode is the `--schema` override applied to every
+  discovered file — without ignore handling, vendored Markdown (e.g. `node_modules` READMEs)
+  validates against the project schema and floods the report with false violations, breaking
+  SC-003's zero-false-positive gate. Respecting `.gitignore` borrows the intent the user has
+  already declared instead of inventing an fmctl-specific ignore list that would only grow
+  (the rejected hardcoded set also silently hid real content like `.github/**/*.md` via its
+  blanket hidden-directory skip). `ignore` is the zero-dependency, ecosystem-standard matcher
+  (used by eslint); gitignore semantics — negation, anchoring, dir-only patterns — are
+  exactly the kind of deceptively gnarly logic Principle VI says not to hand-roll. A
+  per-directory walk (rather than `readdir recursive: true`) is required anyway to prune
+  ignored trees instead of descending into them. Known v0.1 caveat, documented in the spec's
+  Assumptions: linting a subdirectory does not see a parent directory's `.gitignore`
+  (collect-upward and repo-root detection arrive with the future configuration spec).
+  Fault isolation implements US2 acceptance scenario 4.
+- **Alternatives considered**: fixed hardcoded ignore set `node_modules`/`.git`/hidden dirs
+  (arbitrary, invites growth, hides real hidden-directory content); no ignores at all
+  (false-violation flood under `--schema`, see above); `readdir recursive: true` +
+  post-filter (descends into `node_modules` anyway — wasted I/O at exactly the wrong scale);
+  shelling out to `git ls-files` (requires git presence, misses untracked files);
+  `globby`/`fast-glob` (walking is already covered by built-ins; neither implements nested
+  `.gitignore` collection for free).
 
 ## R9. Build, module format, test tooling
 

@@ -100,10 +100,12 @@ mkdir docs && cp task.md docs/ok.md
 printf -- '---\nstatus: bogus\ntype: task\n---\nx\n' > docs/bad.md
 printf -- '# plain doc, no frontmatter\n' > docs/README.md
 printf -- '---\nstatus: [unclosed\n---\nx\n' > docs/broken.md
+printf -- 'ignored.md\n' > docs/.gitignore
+printf -- '---\nstatus: bogus\ntype: task\n---\nx\n' > docs/ignored.md
 
 fmctl lint docs --schema schema.json; echo $?
 # ✗ docs/bad.md (violation), ✗ docs/broken.md (malformed), - docs/README.md (skipped),
-# ✓ ok.md counted; summary line; exit 1
+# ✓ ok.md counted; docs/ignored.md absent (gitignored, FR-011); summary line; exit 1
 fmctl lint docs --schema schema.json --json   # full LintResult JSON
 ```
 

@@ -33,9 +33,9 @@ adapter), `tests/` (`unit/`, `integration/`, `fixtures/`, `helpers/`) per plan.m
 
 **Purpose**: Project initialization — compiler, test runner, package surface
 
-- [ ] T001 Extend package.json: runtime deps `yaml@^2.9`, `ajv@^8`, `ajv-formats`, `commander`; dev deps `typescript@^5`, `vitest`, `@types/node`; `exports` (library entry `./dist/lib/index.js` + types), `bin.fmctl` → `./dist/cli/main.js`, scripts `build` (tsc) and `test` (vitest run)
+- [ ] T001 Extend package.json: runtime deps `yaml@^2.9`, `ajv@^8`, `ajv-formats`, `commander`, `ignore`; dev deps `typescript@^5`, `vitest`, `@types/node`; `exports` (library entry `./dist/lib/index.js` + types), `bin.fmctl` → `./dist/cli/main.js`, scripts `build` (tsc) and `test` (vitest run)
 - [ ] T002 [P] Create tsconfig.json: `strict`, `module`/`moduleResolution` NodeNext, ES2022 target, `declaration`, `rootDir` src, `outDir` dist
-- [ ] T003 [P] Create vitest.config.ts (node environment, `tests/**/*.test.ts` include; `slow` tag support for the perf test)
+- [ ] T003 [P] Create vitest.config.ts (node environment, `tests/**/*.test.ts` include; `passWithNoTests: true` so the Phase 1 checkpoint is green before any tests exist; `slow` tag support for the perf test)
 - [ ] T004 [P] Create directory skeleton `src/lib/`, `src/cli/commands/`, `tests/{unit,integration,fixtures/{splice,lint,modeline,schemas},helpers}/` with `.gitkeep`s, and add `build`/`test` tasks to Taskfile.yml
 
 **Checkpoint**: `npm install && npm run build && npm test` runs (zero tests, green)
@@ -72,10 +72,10 @@ invalid edit leaves the file byte-identical with an actionable error
 - [ ] T011 [P] [US1] Extend tests/fixtures/splice/ with operation triples (input, operation, expected-output): scalar edit preserving inline comment, edit beside odd spacing, flow-list wholesale replace, block-list wholesale replace, object (flow-mapping) whole-value replace, quoted-value edit, field append to end of block, append to empty block, CRLF file edit
 - [ ] T012 [P] [US1] Write splice-engine unit tests asserting byte-level equality against every fixture triple (Buffer.equals, no string trimming) in tests/unit/splice.test.ts
 - [ ] T013 [P] [US1] Write value parsing/serialization unit tests (YAML value typing: `true`/`42`/quoted-string scalars; leading-`[` flow sequence incl. JSON array input; leading-`{` flow mapping incl. JSON object input; unparseable value syntax → UsageError; serialized form round-trips to identical parsed value) in tests/unit/values.test.ts
-- [ ] T014 [P] [US1] Write validation unit tests (Ajv2020 + ajv-formats wiring; translation: enum → `expected: one of …` with allowedValues, required → `field: null`, type mismatch; violations translated correctly through a composed per-type schema (allOf + if/then keyed on `type`); `allErrors`; unparseable/invalid schema → SchemaInvalidError) in tests/unit/validate.test.ts using tests/fixtures/schemas/
+- [ ] T014 [P] [US1] Write validation unit tests (Ajv2020 + ajv-formats wiring; translation: enum → `expected: one of …` with allowedValues, required → `field` = the missing property's name (from `params.missingProperty`), type mismatch; violations translated correctly through a composed per-type schema (allOf + if/then keyed on `type`); `allErrors`; unparseable/invalid schema → SchemaInvalidError) in tests/unit/validate.test.ts using tests/fixtures/schemas/
 - [ ] T015 [P] [US1] Write resolution unit tests for v0.1 chain without modeline (invocation override → GoverningSchema{authority:'invocation'}; nothing → null; missing/unreadable override file → SchemaUnresolvableError) in tests/unit/resolve.test.ts
 - [ ] T016 [P] [US1] Write atomic-writer unit tests (temp+rename in same dir; verify-before-rename: re-parse equality + line-span diff confinement; induced failures: read-only dir, injected rename failure, corrupted-render simulation → VerificationError/IoError with original byte-identical) in tests/unit/writer.test.ts
-- [ ] T017 [P] [US1] Write setFields orchestration unit tests (multi-field all-or-nothing, validation refusal writes nothing, created fields appended last, `changes[].before/after/created`, `validated`/`bypassed`/`governedBy` state, ValidationError carries violations) in tests/unit/api.set.test.ts
+- [ ] T017 [P] [US1] Write setFields orchestration unit tests (multi-field all-or-nothing, validation refusal writes nothing, created fields appended last, `changes[].before/after/created`, `validated`/`bypassed`/`governedBy` state, ValidationError carries violations, dotted field name → UsageError `code` `nested-path-unsupported` with nothing written) in tests/unit/api.set.test.ts
 
 ### Implementation for User Story 1
 
@@ -85,7 +85,7 @@ invalid edit leaves the file byte-identical with an actionable error
 - [ ] T021 [US1] Implement ajv wrapper + violation translation in src/lib/validate.ts (green T014)
 - [ ] T022 [US1] Implement atomic verify-or-revert writer in src/lib/writer.ts (green T016)
 - [ ] T023 [US1] Implement setFields orchestration (load → edit → validate → stage → verify → commit per data-model.md pipeline) and export via src/lib/index.ts (green T017)
-- [ ] T024 [P] [US1] Write CLI integration tests for `fmctl set` driving the built binary via node:child_process (JSON success shape with before/after/governedBy, violation refusal exit 1 + stderr JSON with violations[], `--no-validate`, unvalidated-write stderr notice, exit codes 2/3/4/5/6, value syntax incl. flow lists) in tests/integration/cli-set.test.ts — observe failing
+- [ ] T024 [P] [US1] Write CLI integration tests for `fmctl set` driving the built binary via node:child_process (JSON success shape with before/after/governedBy, violation refusal exit 1 + stderr JSON with violations[], `--no-validate`, unvalidated-write stderr notice, exit codes 2/3/4/5/6, dotted field name exit 2 with `code` `nested-path-unsupported`, value syntax incl. flow lists) in tests/integration/cli-set.test.ts — observe failing
 - [ ] T025 [US1] Implement CLI scaffold: commander program in src/cli/main.ts and human/JSON renderers + FmctlError→exit-code mapping in src/cli/output.ts
 - [ ] T026 [US1] Implement `set` command (field=value parsing, --schema, --no-validate, --json) in src/cli/commands/set.ts (green T024)
 
@@ -104,8 +104,8 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 2 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T027 [P] [US2] Create lint fixture tree in tests/fixtures/lint/ (valid files, seeded violations across violation classes incl. against a composed per-type schema, no-frontmatter file, malformed file, nested dirs, `node_modules`/`.git`/hidden dirs that must be ignored)
-- [ ] T028 [P] [US2] Write lint unit tests (recursive `*.md` discovery + ignore set, explicit file arguments linted directly, exit-precedence edge: all files errored → invalid/error outcome not nothing-validated, per-file fault isolation, FileLintResult statuses valid/invalid/ungoverned/skipped-no-frontmatter/error, governedBy attribution, summary counts, ErrorInfo serialization) in tests/unit/lint.test.ts
+- [ ] T027 [P] [US2] Create lint fixture tree in tests/fixtures/lint/ (valid files, seeded violations across violation classes incl. against a composed per-type schema, no-frontmatter file, malformed file, nested dirs, a hidden dir (e.g. `.docs/`) with a governed file that MUST be walked, gitignored content: root and nested ignore files with a dir-only and a negation pattern covering a violating file that must not be reported). Ignore files are stored as `_gitignore` and renamed to `.gitignore` when the corpus helper stages the tree into a temp dir — a real `.gitignore` in fixtures would make git ignore the fixtures themselves; extend tests/helpers/corpus.ts with this staging (which also exercises the no-git-repo case, per research R8)
+- [ ] T028 [P] [US2] Write lint unit tests (recursive `*.md` discovery honoring `.gitignore` — root and nested files, dir-only and negation patterns, ignored dirs pruned not descended, `.git` always skipped, hidden dirs walked; explicit file arguments linted directly even when gitignored; exit-precedence edge: all files errored → invalid/error outcome not nothing-validated, per-file fault isolation, FileLintResult statuses valid/invalid/ungoverned/skipped-no-frontmatter/error, governedBy attribution, summary counts, ErrorInfo serialization) in tests/unit/lint.test.ts
 - [ ] T029 [P] [US2] Write CLI integration tests for `fmctl lint` (human per-file lines + summary, `--json` full LintResult, exit 1 on invalid/error, exit 5 on unusable --schema and on nothing-validated, exit 0 with ungoverned+skipped only) in tests/integration/cli-lint.test.ts
 
 ### Implementation for User Story 2

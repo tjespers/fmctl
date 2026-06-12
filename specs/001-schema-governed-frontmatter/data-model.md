@@ -72,7 +72,7 @@ One way a file's frontmatter fails its schema (translated from an ajv error).
 
 | Field | Type | Notes |
 |---|---|---|
-| `field` | `string \| null` | dotted instance path; `null` for document-level violations (e.g. missing required) |
+| `field` | `string \| null` | dotted instance path; for `required` violations the missing property's name (from ajv `params.missingProperty`); `null` only for document-level violations that name no field (e.g. root type mismatch) |
 | `value` | `unknown` | the offending value (`undefined` when absent) |
 | `message` | `string` | human sentence: what is wrong |
 | `expected` | `string` | what would have been valid (e.g. `one of: draft, review, done`) |
@@ -103,7 +103,7 @@ Hierarchy rooted at `FmctlError extends Error`, every class carrying `code` (sta
 
 ```text
 FmctlError
-├── UsageError                  (exit 2)
+├── UsageError                  (exit 2)   — incl. dotted field names (distinct `code` `nested-path-unsupported`)
 ├── NotFoundError               (exit 3)
 │   ├── FileNotFoundError
 │   ├── NoFrontmatterError

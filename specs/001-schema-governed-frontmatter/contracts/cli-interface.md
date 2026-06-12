@@ -29,7 +29,9 @@ Surgically update/create one or more fields; validated by default. (FR-002–FR-
 
 - Value syntax: a YAML value — plain scalar; leading `[` → flow sequence; leading `{` → flow
   mapping (JSON arrays and objects are valid YAML flow). Quoting forces string. Always a
-  whole-value replacement of a top-level field; nested-path addressing is unsupported.
+  whole-value replacement of a top-level field; nested-path addressing is unsupported — a
+  field name containing `.` exits `2` with `code` `nested-path-unsupported` ("nested paths
+  unsupported in this version").
 - `--no-validate` bypasses **schema validation only** (FR-006). Integrity guarantees are not
   flag-controllable.
 - When no schema resolves (and not bypassed): write proceeds, stderr carries
@@ -50,7 +52,9 @@ Validate the given files and directories (default `.`): explicit file paths are 
 directly; directories are walked recursively — always, no recursion toggle in v0.1.
 (FR-011–FR-013)
 
-- Discovery: recursive `*.md`, skipping `node_modules`, `.git`, and hidden directories.
+- Discovery: recursive `*.md`, honoring `.gitignore` files found in the walked tree; `.git`
+  itself is always skipped, and there are no other built-in ignores (hidden directories such
+  as `.github` are walked). Explicit file arguments are linted directly and never ignored.
 - Per-file fault isolation: a malformed file is one `error` entry, the walk continues.
 - Human output: one line per non-valid file
   (`✗ tasks/a.md  status: "done" not allowed — expected one of: draft, review`,
@@ -60,7 +64,8 @@ directly; directories are walked recursively — always, no recursion toggle in 
 - Exit decision, precedence top-down: `1` if any file's result has status `invalid` or `error`
   · `5` if `--schema` itself is unusable, or if no override was given, `summary.checked === 0`,
   and no file errored while Markdown files were found · else `0` (ungoverned and skipped files
-  are reported, not failing).
+  are reported, not failing). Thrown setup errors follow the global table (`3` nonexistent
+  root path · `2` usage).
 - Schema attribution: every checked file's result names its governing schema and the authority
   it governs by — `invocation` or `document` (FR-012).
 

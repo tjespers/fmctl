@@ -10,7 +10,9 @@
 
 *Note: the description above is the historical input to `/speckit-specify`. The project-config
 mechanism it mentions was subsequently removed from v0.1 scope (see FR-008 and Out of Scope);
-the per-invocation override and the in-file modeline are the only v0.1 schema sources.*
+the per-invocation override and the in-file modeline are the only v0.1 schema sources. Lint's
+"walks all Markdown files" was likewise refined during review: discovery honors `.gitignore`
+(see FR-011).*
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -32,6 +34,7 @@ A developer — or an AI agent acting on his behalf — changes the state record
 6. **Given** the validation-bypass option, **When** the user sets a value the schema forbids, **Then** the write proceeds — while surgical-edit behavior and post-write verification still fully apply.
 7. **Given** a file with malformed frontmatter, **When** the user attempts any edit, with or without the bypass option, **Then** the command refuses, nothing is modified, and the error names the file and the parse problem.
 8. **Given** an object-valued field (or a field being created), **When** the user replaces it with a new object value, **Then** the resulting frontmatter contains exactly the new object as the field's whole value, it validates against the schema, and the rest of the file is unchanged.
+9. **Given** a write that fails after validation (the target becomes unwritable, the operation is interrupted, or self-verification detects an anomaly), **When** the command ends, **Then** the original file content is intact byte-for-byte and the command fails with a distinct exit code.
 
 ---
 
@@ -41,7 +44,7 @@ A developer, a CI job, or an agent checks an entire folder tree of Markdown file
 
 **Why this priority**: Validation across the whole corpus is how invalid state already present in a project gets found — it turns the schema from documentation into an enforced contract, and it is the natural CI / agent guardrail.
 
-**Independent Test**: In a folder containing a schema plus a mix of valid files, files with seeded violations, files without frontmatter, and one malformed file, run lint once and verify each file is classified correctly with an overall failing exit code.
+**Independent Test**: In a folder containing a schema plus a mix of valid files, files with seeded violations, files without frontmatter, one malformed file, and one gitignored file, run lint once and verify each file is classified correctly — the gitignored file absent — with an overall failing exit code.
 
 **Acceptance Scenarios**:
 
@@ -51,6 +54,7 @@ A developer, a CI job, or an agent checks an entire folder tree of Markdown file
 4. **Given** a file with malformed frontmatter, **When** lint runs, **Then** that file is reported as an error, the remaining files are still checked, and the overall exit code signals failure.
 5. **Given** a mixed folder, **When** lint runs, **Then** the report names which schema governed each checked file.
 6. **Given** no schema can be resolved for the lint target, **When** lint runs, **Then** it fails loudly with a distinct error explaining that nothing could be validated.
+7. **Given** a tree whose `.gitignore` excludes a directory containing Markdown files, **When** lint runs, **Then** the excluded files are neither checked nor reported, while explicitly named file arguments are always linted even when ignored.
 
 ---
 
@@ -87,6 +91,7 @@ A developer brings a file that follows an external standard — one whose schema
 4. **Given** a per-invocation schema override, **When** supplied, **Then** it takes precedence over any modeline.
 5. **Given** any write to a file carrying a modeline, **When** the write completes, **Then** the modeline comment is preserved exactly, and no editing command exists that can alter it as data.
 6. **Given** a modeline referencing a schema document that does not exist or cannot be read, **When** any command needs it, **Then** the command refuses loudly, naming the file, the modeline reference, and the problem.
+7. **Given** a modeline whose schema reference is a URI (`https://…`), **When** any command needs the file's governing schema, **Then** the command refuses with a distinct error stating that URI references are reserved for a future version.
 
 ---
 
@@ -100,7 +105,7 @@ A developer brings a file that follows an external standard — one whose schema
 - Frontmatter containing duplicate keys: refused as ambiguous — named file, named key.
 - Frontmatter whose data cannot be represented in the validation data model (e.g. non-string keys): refused with a clear explanation.
 - A write that fails mid-operation (disk full, permissions, interruption): the original file content remains intact, byte-for-byte.
-- Setting a nested (non-top-level) path: fails with a distinct "unsupported in this version" error.
+- Setting a field whose name contains a dot (e.g. `meta.author`): refused with a distinct "nested paths unsupported in this version" error — nested addressing and writing literal dotted keys are both deferred, so the rejection stays unambiguous. Reads treat field names as literal top-level keys.
 
 ## Requirements *(mandatory)*
 
@@ -116,11 +121,11 @@ A developer brings a file that follows an external standard — one whose schema
 - **FR-008**: The system MUST resolve a file's governing schema in this precedence order: per-invocation override, in-file modeline, none. No ambient or global configuration is consulted in v0.1.
 - **FR-009**: The modeline MUST be a YAML comment inside the frontmatter block: invisible to schema validation and to external consumers of the file's data, never readable or writable as a field through the system's commands, and preserved exactly by all writes.
 - **FR-010**: Modeline schema references MUST support absolute filesystem paths and file-relative paths (resolved against the referencing file's directory). URI references (e.g. `https://…`) MUST be recognized and rejected with a distinct error stating they are reserved for a future version.
-- **FR-011**: Lint MUST accept both files and directories: explicit file paths are linted directly, and directories are walked recursively (always — v0.1 has no recursion toggle). Each file is validated against its resolved schema; files without frontmatter are reported as skipped, and files with malformed frontmatter are reported as errors without halting the remaining files.
+- **FR-011**: Lint MUST accept both files and directories: explicit file paths are linted directly (ignore rules never apply to them), and directories are walked recursively (always — v0.1 has no recursion toggle), honoring `.gitignore` files found in the walked tree; the `.git` directory itself is always skipped, and there are no other built-in ignores. Each file is validated against its resolved schema; files without frontmatter are reported as skipped, and files with malformed frontmatter are reported as errors without halting the remaining files.
 - **FR-012**: The lint report MUST state, per file: which schema governed it (or why it was skipped or errored), and each violation with its field and what would have been valid.
 - **FR-013**: When no schema resolves for a file: reads proceed normally; writes proceed without validation but MUST emit a diagnostic notice that the write was unvalidated; lint MUST report such files as ungoverned, and MUST fail with a distinct error when nothing at all could be validated (no override supplied, no file carries a modeline, and no per-file errors were reported — per-file violations and errors take precedence over this failure).
 - **FR-014**: Every command MUST offer a machine-readable (JSON) output mode; results go to standard output and diagnostics to standard error.
-- **FR-015**: Every failure class MUST map to a distinct, documented exit code, and identical inputs MUST produce identical outcomes.
+- **FR-015**: Every failure class MUST be identifiable by a distinct, stable machine-readable code; every failure family MUST map to a distinct, documented exit code; and identical inputs MUST produce identical outcomes.
 - **FR-016**: The system MUST refuse to read best-effort or write to: malformed frontmatter, frontmatter with duplicate keys, frontmatter not representable in the validation data model, and operations requiring an unreadable or invalid schema document — in each case naming the file and the specific problem.
 - **FR-017**: Schemas MUST be standard JSON Schema documents, usable unmodified by third-party tools, with per-type variation expressed through standard schema composition — no tool-specific schema extensions.
 - **FR-018**: Every capability MUST be available to programmatic consumers without invoking the command-line binary; the command-line interface is one consumer of the same capability surface.
@@ -152,12 +157,13 @@ A developer brings a file that follows an external standard — one whose schema
 
 - Values supplied to an edit are interpreted as YAML values: plain scalars (unquoted `true`/`42` become boolean/number; quoting forces a string), flow sequences (`[…]`) for lists, and flow mappings (`{…}`) for objects; the schema then enforces expected types.
 - Newly created fields are appended at the end of the frontmatter block.
-- Reads and writes address top-level fields only, always as whole values; nested-path addressing is unsupported in v0.1 and fails distinctly.
+- Reads and writes address top-level fields only, always as whole values; nested-path addressing is unsupported in v0.1 — a write naming a field that contains a dot is rejected with a distinct error (writing literal dotted keys is deferred along with nested addressing), while reads treat field names literally.
 - Read and edit commands operate on one file per invocation; folder-scale operation is lint's job in v0.1.
 - A Markdown file with no frontmatter block cannot be read from or written to in v0.1 (distinct error); creating frontmatter blocks from scratch is deferred.
 - The exact modeline syntax is a design-phase decision; one modeline per file applies in v0.1. Relative modeline references intentionally travel with the file (moving a file without its schema breaks the reference — accepted for v0.1; stable URI references arrive with the future configuration/catalog feature).
 - v0.1 has no configuration file concept at all; in practice, project-wide schema enforcement is achieved by supplying the per-invocation schema override (e.g. via a task runner or agent harness wrapper).
 - One current, widely supported JSON Schema draft is targeted (selected at design time); schema documents are local files, and a schema split across multiple documents (cross-file references) is out of scope for v0.1.
+- Lint discovery honors `.gitignore` files encountered within the linted tree — no git-repo detection, no global or repo-local exclude files (`.git/info/exclude`), and linting a subdirectory does not see a parent directory's `.gitignore` (collect-upward arrives with the future configuration spec). The `.git` directory is always skipped.
 - Single user on a local filesystem; concurrent writers to the same file are out of scope.
 - Success criterion SC-003 is evaluated by dogfooding on the author's real Markdown-state project.
 
