@@ -1,25 +1,17 @@
 <!--
 Sync Impact Report
 ==================
-Version change: (template) → 1.0.0 — initial ratification
-Modified principles: all template placeholders replaced (initial adoption)
-  - I. Byte-Level Conservatism (NON-NEGOTIABLE)
-  - II. Verify-or-Revert Writes
-  - III. Refuse Loudly
-  - IV. Test-First, No Exceptions (NON-NEGOTIABLE)
-  - V. Agent-First Ergonomics
-  - VI. Boring Code, Lean Dependencies
-  - VII. Library-First, Prove Before Grow
-Added sections: Technical Constraints; Development Workflow
+Version change: 1.0.0 → 1.0.1 — Principle III wording clarification (PATCH)
+Modified principles:
+  - III. Refuse Loudly — exit-code mapping clarified: each failure class remains a distinct,
+    exported error type carrying a stable machine-readable code; the CLI maps failure
+    *families* (not individual classes) to distinct, documented exit codes, with the precise
+    class always identifiable from machine-readable output. Aligns the text with the intended
+    design (spec 001 FR-015, research.md R5): a memorizable exit-code table for agents, with
+    the JSON `code` field carrying the precise class.
+Added sections: none
 Removed sections: none
-Templates:
-  - .specify/templates/plan-template.md ✅ aligned — Constitution Check gate is generic and
-    derives its gates from this file at plan time; no edit required
-  - .specify/templates/spec-template.md ✅ aligned — no constitution-driven changes required
-  - .specify/templates/tasks-template.md ✅ updated — tests were marked "OPTIONAL", which
-    contradicted Principle IV; test tasks are now mandatory and test-first
-  - CLAUDE.md ✅ no change needed — contains only the managed SPECKIT block, refreshed by the
-    agent-context extension hooks
+Templates: ✅ no template changes required
 Follow-up TODOs: none
 -->
 
@@ -71,9 +63,11 @@ self-verification makes that failure mode loud and recoverable.
 When fmctl encounters a file whose frontmatter is malformed (broken YAML, missing or mangled
 delimiters), it MUST refuse to operate on it: no best-effort reads, no writes, and no "repair"
 beyond what was explicitly asked. Errors MUST name the file and the specific problem. Each
-failure class MUST exist as a distinct, exported error type in the library, and the CLI MUST
-map these 1:1 to distinct, documented exit codes. Identical inputs MUST produce identical
-outcomes — no heuristic or environment-dependent behavior on the failure path.
+failure class MUST exist as a distinct, exported error type in the library carrying a stable
+machine-readable code; the CLI MUST map each failure family to a distinct, documented exit
+code, with the precise class always identifiable from machine-readable output. Identical
+inputs MUST produce identical outcomes — no heuristic or environment-dependent behavior on
+the failure path.
 
 **Rationale**: AI agents, not humans, hit these walls most often. An agent can recover cleanly
 from a predictable hard wall; it cannot recover from silent salvage that returns plausible but
@@ -171,4 +165,4 @@ Compliance is verified at two points: the Constitution Check gate in every plan,
 every implementation against its spec and these principles. Unjustified complexity is rejected,
 not tolerated.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-10 | **Last Amended**: 2026-06-10
+**Version**: 1.0.1 | **Ratified**: 2026-06-10 | **Last Amended**: 2026-06-12
