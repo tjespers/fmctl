@@ -33,10 +33,10 @@ adapter), `tests/` (`unit/`, `integration/`, `fixtures/`, `helpers/`) per plan.m
 
 **Purpose**: Project initialization — compiler, test runner, package surface
 
-- [ ] T001 Extend package.json: runtime deps `yaml@^2.9`, `ajv@^8`, `ajv-formats`, `commander`, `ignore`; dev deps `typescript@^5`, `vitest`, `@types/node`; `exports` (library entry `./dist/lib/index.js` + types), `bin.fmctl` → `./dist/cli/main.js`, scripts `build` (tsc) and `test` (vitest run)
-- [ ] T002 [P] Create tsconfig.json: `strict`, `module`/`moduleResolution` NodeNext, ES2022 target, `declaration`, `rootDir` src, `outDir` dist
-- [ ] T003 [P] Create vitest.config.ts (node environment, `tests/**/*.test.ts` include; `passWithNoTests: true` so the Phase 1 checkpoint is green before any tests exist; `slow` tag support for the perf test)
-- [ ] T004 [P] Create directory skeleton `src/lib/`, `src/cli/commands/`, `tests/{unit,integration,fixtures/{splice,lint,modeline,schemas},helpers}/` with `.gitkeep`s, and add `build`/`test` tasks to Taskfile.yml
+- [x] T001 Extend package.json: runtime deps `yaml@^2.9`, `ajv@^8`, `ajv-formats`, `commander`, `ignore`; dev deps `typescript@^5`, `vitest`, `@types/node`; `exports` (library entry `./dist/lib/index.js` + types), `bin.fmctl` → `./dist/cli/main.js`, scripts `build` (tsc) and `test` (vitest run)
+- [x] T002 [P] Create tsconfig.json: `strict`, `module`/`moduleResolution` NodeNext, ES2022 target, `declaration`, `rootDir` src, `outDir` dist
+- [x] T003 [P] Create vitest.config.ts (node environment, `tests/**/*.test.ts` include; `passWithNoTests: true` so the Phase 1 checkpoint is green before any tests exist; `slow` tag support for the perf test)
+- [x] T004 [P] Create directory skeleton `src/lib/`, `src/cli/commands/`, `tests/{unit,integration,fixtures/{splice,lint,modeline,schemas},helpers}/` with `.gitkeep`s, and add `build`/`test` tasks to Taskfile.yml
 
 **Checkpoint**: `npm install && npm run build && npm test` runs (zero tests, green)
 
@@ -48,12 +48,12 @@ adapter), `tests/` (`unit/`, `integration/`, `fixtures/`, `helpers/`) per plan.m
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 [P] Write unit tests for the error hierarchy (every class: stable `code`, `exitCode` per research.md R5 table, `file`/`field` context, `instanceof FmctlError`) in tests/unit/errors.test.ts — observe failing
-- [ ] T006 Implement typed error hierarchy per data-model.md in src/lib/errors.ts
-- [ ] T007 [P] Create base golden corpus in tests/fixtures/splice/ (well-formed variants: block+inline comments, odd spacing, flow/block lists, quoting variants, CRLF, empty block; malformed variants: unclosed delimiter, broken YAML, duplicate keys, non-string keys) plus corpus loader and byte-level diff assertion helpers in tests/helpers/corpus.ts
-- [ ] T008 [P] Write unit tests for the document model (delimiter split with byte-faithful body, `raw` reassembly invariant, CRLF preservation, field locate via `node.range` with 1-based `entryLines`, typed refusals: NoFrontmatterError/ParseError/DuplicateKeyError/NotRepresentableError) in tests/unit/document.test.ts — observe failing
-- [ ] T009 Implement FrontmatterDocument load/split/parse/locate per data-model.md in src/lib/document.ts
-- [ ] T010 Create public API barrel exporting errors + document types in src/lib/index.ts
+- [x] T005 [P] Write unit tests for the error hierarchy (every class: stable `code`, `exitCode` per research.md R5 table, `file`/`field` context, `instanceof FmctlError`) in tests/unit/errors.test.ts — observe failing
+- [x] T006 Implement typed error hierarchy per data-model.md in src/lib/errors.ts
+- [x] T007 [P] Create base golden corpus in tests/fixtures/splice/ (well-formed variants: block+inline comments, odd spacing, flow/block lists, quoting variants, CRLF, empty block; malformed variants: unclosed delimiter, broken YAML, duplicate keys, non-string keys) plus corpus loader and byte-level diff assertion helpers in tests/helpers/corpus.ts
+- [x] T008 [P] Write unit tests for the document model (delimiter split with byte-faithful body, `raw` reassembly invariant, CRLF preservation, field locate via `node.range` with 1-based `entryLines`, typed refusals: NoFrontmatterError/ParseError/DuplicateKeyError/NotRepresentableError) in tests/unit/document.test.ts — observe failing
+- [x] T009 Implement FrontmatterDocument load/split/parse/locate per data-model.md in src/lib/document.ts
+- [x] T010 Create public API barrel exporting errors + document types in src/lib/index.ts
 
 **Checkpoint**: Foundation green — user story implementation can begin
 
@@ -69,26 +69,26 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 1 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T011 [P] [US1] Extend tests/fixtures/splice/ with operation triples (input, operation, expected-output): scalar edit preserving inline comment, edit beside odd spacing, flow-list wholesale replace, block-list wholesale replace, object (flow-mapping) whole-value replace, quoted-value edit, field append to end of block, append to empty block, CRLF file edit
-- [ ] T012 [P] [US1] Write splice-engine unit tests asserting byte-level equality against every fixture triple (Buffer.equals, no string trimming) in tests/unit/splice.test.ts
-- [ ] T013 [P] [US1] Write value parsing/serialization unit tests (YAML value typing: `true`/`42`/quoted-string scalars; leading-`[` flow sequence incl. JSON array input; leading-`{` flow mapping incl. JSON object input; unparseable value syntax → UsageError; serialized form round-trips to identical parsed value) in tests/unit/values.test.ts
-- [ ] T014 [P] [US1] Write validation unit tests (Ajv2020 + ajv-formats wiring; translation: enum → `expected: one of …` with allowedValues, required → `field` = the missing property's name (from `params.missingProperty`), type mismatch; violations translated correctly through a composed per-type schema (allOf + if/then keyed on `type`); `allErrors`; unparseable/invalid schema → SchemaInvalidError) in tests/unit/validate.test.ts using tests/fixtures/schemas/
-- [ ] T015 [P] [US1] Write resolution unit tests for v0.1 chain without modeline (invocation override → GoverningSchema{authority:'invocation'}; nothing → null; missing/unreadable override file → SchemaUnresolvableError) in tests/unit/resolve.test.ts
-- [ ] T016 [P] [US1] Write atomic-writer unit tests (temp+rename in same dir; verify-before-rename: re-parse equality + line-span diff confinement; induced failures: read-only dir, injected rename failure, corrupted-render simulation → VerificationError/IoError with original byte-identical) in tests/unit/writer.test.ts
-- [ ] T017 [P] [US1] Write setFields orchestration unit tests (multi-field all-or-nothing, validation refusal writes nothing, created fields appended last, `changes[].before/after/created`, `validated`/`bypassed`/`governedBy` state, ValidationError carries violations, dotted field name → UsageError `code` `nested-path-unsupported` with nothing written) in tests/unit/api.set.test.ts
+- [x] T011 [P] [US1] Extend tests/fixtures/splice/ with operation triples (input, operation, expected-output): scalar edit preserving inline comment, edit beside odd spacing, flow-list wholesale replace, block-list wholesale replace, object (flow-mapping) whole-value replace, quoted-value edit, field append to end of block, append to empty block, CRLF file edit
+- [x] T012 [P] [US1] Write splice-engine unit tests asserting byte-level equality against every fixture triple (Buffer.equals, no string trimming) in tests/unit/splice.test.ts
+- [x] T013 [P] [US1] Write value parsing/serialization unit tests (YAML value typing: `true`/`42`/quoted-string scalars; leading-`[` flow sequence incl. JSON array input; leading-`{` flow mapping incl. JSON object input; unparseable value syntax → UsageError; serialized form round-trips to identical parsed value) in tests/unit/values.test.ts
+- [x] T014 [P] [US1] Write validation unit tests (Ajv2020 + ajv-formats wiring; translation: enum → `expected: one of …` with allowedValues, required → `field` = the missing property's name (from `params.missingProperty`), type mismatch; violations translated correctly through a composed per-type schema (allOf + if/then keyed on `type`); `allErrors`; unparseable/invalid schema → SchemaInvalidError) in tests/unit/validate.test.ts using tests/fixtures/schemas/
+- [x] T015 [P] [US1] Write resolution unit tests for v0.1 chain without modeline (invocation override → GoverningSchema{authority:'invocation'}; nothing → null; missing/unreadable override file → SchemaUnresolvableError) in tests/unit/resolve.test.ts
+- [x] T016 [P] [US1] Write atomic-writer unit tests (temp+rename in same dir; verify-before-rename: re-parse equality + line-span diff confinement; induced failures: read-only dir, injected rename failure, corrupted-render simulation → VerificationError/IoError with original byte-identical) in tests/unit/writer.test.ts
+- [x] T017 [P] [US1] Write setFields orchestration unit tests (multi-field all-or-nothing, validation refusal writes nothing, created fields appended last, `changes[].before/after/created`, `validated`/`bypassed`/`governedBy` state, ValidationError carries violations, dotted field name → UsageError `code` `nested-path-unsupported` with nothing written) in tests/unit/api.set.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Implement value parsing/serialization in src/lib/values.ts (green T013)
-- [ ] T019 [US1] Implement splice engine (range splice for existing fields, end-of-block append for new fields, EOL-flavor aware) in src/lib/splice.ts (green T012/T011)
-- [ ] T020 [US1] Implement schema resolution without modeline tier (override → null) in src/lib/resolve.ts (green T015)
-- [ ] T021 [US1] Implement ajv wrapper + violation translation in src/lib/validate.ts (green T014)
-- [ ] T022 [US1] Implement atomic verify-or-revert writer in src/lib/writer.ts (green T016)
-- [ ] T023 [US1] Implement setFields orchestration (load → edit → validate → stage → verify → commit per data-model.md pipeline) and export via src/lib/index.ts (green T017)
-- [ ] T024 [P] [US1] Write CLI integration tests for `fmctl set` driving the built binary via node:child_process (JSON success shape with before/after/governedBy, violation refusal exit 1 + stderr JSON with violations[], `--no-validate`, unvalidated-write stderr notice, exit codes 2/3/4/5/6 plus 7 on filesystem failure (e.g. read-only target directory), dotted field name exit 2 with `code` `nested-path-unsupported`, value syntax incl. flow lists) in tests/integration/cli-set.test.ts — observe failing
-- [ ] T025 [US1] Implement CLI scaffold: commander program in src/cli/main.ts and human/JSON renderers + FmctlError→exit-code mapping in src/cli/output.ts
-- [ ] T026 [US1] Implement `set` command (field=value parsing, --schema, --no-validate, --json) in src/cli/commands/set.ts (green T024)
-- [ ] T045 [P] Write architecture-guard test asserting src/cli sources import from the library only via src/lib/index.ts (scan import statements — zero new dependencies, Constitution Principle VII) in tests/unit/architecture.test.ts — cross-cutting, ordered here so the boundary is guarded from the first CLI code
+- [x] T018 [US1] Implement value parsing/serialization in src/lib/values.ts (green T013)
+- [x] T019 [US1] Implement splice engine (range splice for existing fields, end-of-block append for new fields, EOL-flavor aware) in src/lib/splice.ts (green T012/T011)
+- [x] T020 [US1] Implement schema resolution without modeline tier (override → null) in src/lib/resolve.ts (green T015)
+- [x] T021 [US1] Implement ajv wrapper + violation translation in src/lib/validate.ts (green T014)
+- [x] T022 [US1] Implement atomic verify-or-revert writer in src/lib/writer.ts (green T016)
+- [x] T023 [US1] Implement setFields orchestration (load → edit → validate → stage → verify → commit per data-model.md pipeline) and export via src/lib/index.ts (green T017)
+- [x] T024 [P] [US1] Write CLI integration tests for `fmctl set` driving the built binary via node:child_process (JSON success shape with before/after/governedBy, violation refusal exit 1 + stderr JSON with violations[], `--no-validate`, unvalidated-write stderr notice, exit codes 2/3/4/5/6 plus 7 on filesystem failure (e.g. read-only target directory), dotted field name exit 2 with `code` `nested-path-unsupported`, value syntax incl. flow lists) in tests/integration/cli-set.test.ts — observe failing
+- [x] T025 [US1] Implement CLI scaffold: commander program in src/cli/main.ts and human/JSON renderers + FmctlError→exit-code mapping in src/cli/output.ts
+- [x] T026 [US1] Implement `set` command (field=value parsing, --schema, --no-validate, --json) in src/cli/commands/set.ts (green T024)
+- [x] T045 [P] Write architecture-guard test asserting src/cli sources import from the library only via src/lib/index.ts (scan import statements — zero new dependencies, Constitution Principle VII) in tests/unit/architecture.test.ts — cross-cutting, ordered here so the boundary is guarded from the first CLI code
 
 **Checkpoint**: MVP — quickstart scenarios 2–6 pass end-to-end
 

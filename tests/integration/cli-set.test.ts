@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { mkdtempSync, writeFileSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, rmSync, chmodSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { runCli } from '../helpers/cli';
@@ -100,5 +100,17 @@ describe('fmctl set (integration)', () => {
     const { path } = stage('splice/simple.md');
     const run = runCli(['set', path, 'status=review', '--schema', '/no/such/schema.json']);
     expect(run.status).toBe(5);
+  });
+
+  it('exit 7 on a filesystem failure (unwritable directory); file untouched', () => {
+    const { dir, path, original } = stage('splice/simple.md');
+    chmodSync(dir, 0o555);
+    try {
+      const run = runCli(['set', path, 'status=review', '--schema', SCHEMA]);
+      expect(run.status).toBe(7);
+      expect(readFileSync(path, 'utf8')).toBe(original);
+    } finally {
+      chmodSync(dir, 0o755);
+    }
   });
 });
