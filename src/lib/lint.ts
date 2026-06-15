@@ -3,7 +3,7 @@ import { join, relative, resolve as resolvePath, sep } from 'node:path';
 import ignore from 'ignore';
 import type { Ignore } from 'ignore';
 import { FrontmatterDocument } from './document.js';
-import { resolveSchema } from './resolve.js';
+import { resolveFromDoc, resolveSchema } from './resolve.js';
 import { compileSchema } from './validate.js';
 import type { CompiledSchema } from './validate.js';
 import { FileNotFoundError, FmctlError, IoError, NoFrontmatterError } from './errors.js';
@@ -45,20 +45,28 @@ async function lintFile(
   options: LintOptions,
   cache: Map<string, CompiledSchema>,
 ): Promise<FileLintResult> {
-  const governedBy = await resolveSchema(
-    file,
-    options.schema !== undefined ? { schema: options.schema } : {},
-  );
-
+  // Load first so a malformed/no-frontmatter file is a fault-isolated entry,
+  // and so modeline resolution reads the doc we already parsed.
   let doc: FrontmatterDocument;
   try {
     doc = await FrontmatterDocument.load(file);
   } catch (err) {
     if (err instanceof NoFrontmatterError) {
-      return { file, status: 'skipped-no-frontmatter', governedBy, violations: [], error: null };
+      return { file, status: 'skipped-no-frontmatter', governedBy: null, violations: [], error: null };
     }
     if (err instanceof FmctlError) {
-      return { file, status: 'error', governedBy, violations: [], error: { code: err.code, message: err.message } };
+      return { file, status: 'error', governedBy: null, violations: [], error: { code: err.code, message: err.message } };
+    }
+    throw err;
+  }
+
+  let governedBy;
+  try {
+    governedBy = await resolveFromDoc(doc, options.schema !== undefined ? { schema: options.schema } : {});
+  } catch (err) {
+    // a broken modeline ref / reserved-URI ref is a per-file fault, not an abort
+    if (err instanceof FmctlError) {
+      return { file, status: 'error', governedBy: null, violations: [], error: { code: err.code, message: err.message } };
     }
     throw err;
   }

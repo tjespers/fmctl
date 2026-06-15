@@ -8,6 +8,7 @@ import {
   NotRepresentableError,
   ParseError,
 } from './errors.js';
+import { scanModeline } from './modeline.js';
 import type { JsonValue, Modeline } from './types.js';
 
 /** The delimited YAML region at the top of a document. */
@@ -141,7 +142,7 @@ export class FrontmatterDocument {
       body: raw.slice(region.bodyStart),
       data,
       fields,
-      modeline: null, // populated by the modeline scanner (Phase 6)
+      modeline: scanModeline(region.text, path),
     });
   }
 

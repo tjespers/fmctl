@@ -54,9 +54,20 @@ describe('FrontmatterDocument.fromString', () => {
     expect(doc.body).toBe('body\n');
   });
 
-  it('has no modeline until the Phase 6 scanner lands', () => {
+  it('has no modeline when the block contains none', () => {
     const doc = FrontmatterDocument.fromString(readFixture('splice/simple.md'));
     expect(doc.modeline).toBeNull();
+  });
+
+  it('parses a modeline without surfacing it as data', () => {
+    const doc = FrontmatterDocument.fromString(readFixture('modeline/governed.md'), '/proj/governed.md');
+    expect(doc.modeline).not.toBeNull();
+    expect(doc.modeline!.schema.ref).toBe('./schema.json');
+    expect(doc.modeline!.schema.location).toBe('/proj/schema.json');
+    // never exposed as a field
+    expect(doc.data).toEqual({ status: 'draft', type: 'task' });
+    expect(doc.field('schema')).toBeUndefined();
+    expect(doc.field('fmctl')).toBeUndefined();
   });
 });
 

@@ -150,15 +150,15 @@ data fields; URI ref exits 5; modeline survives writes byte-for-byte
 
 ### Tests for User Story 4 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T036 [P] [US4] Create modeline fixtures in tests/fixtures/modeline/ (modeline-governed file, strict external-standard file with `additionalProperties: false` schema, URI modeline, broken-ref modeline, standalone file outside any tree, modeline+odd placement within block)
-- [ ] T037 [P] [US4] Write modeline unit tests (grammar scan on raw frontmatter text, whitespace tolerance, first-match-wins, SchemaRef kinds absolute/relative/uri with `location` resolution, never exposed as data) in tests/unit/modeline.test.ts
-- [ ] T038 [P] [US4] Extend resolution + document tests: modeline tier precedence (invocation override beats modeline; modeline → GoverningSchema{authority:'document'}; broken ref → SchemaUnresolvableError; URI ref → distinct `schema-uri-reserved` code) in tests/unit/resolve.test.ts and FrontmatterDocument.modeline field in tests/unit/document.test.ts
-- [ ] T039 [P] [US4] Write CLI integration tests: set/lint against modeline-governed and standalone files, modeline byte-survival through writes, URI exit 5, lint authority attribution "document" in tests/integration/cli-modeline.test.ts
+- [x] T036 [P] [US4] Create modeline fixtures in tests/fixtures/modeline/ (modeline-governed file, strict external-standard file with `additionalProperties: false` schema, URI modeline, broken-ref modeline, standalone file outside any tree, modeline+odd placement within block)
+- [x] T037 [P] [US4] Write modeline unit tests (grammar scan on raw frontmatter text, whitespace tolerance, first-match-wins, SchemaRef kinds absolute/relative/uri with `location` resolution, never exposed as data) in tests/unit/modeline.test.ts
+- [x] T038 [P] [US4] Extend resolution + document tests: modeline tier precedence (invocation override beats modeline; modeline → GoverningSchema{authority:'document'}; broken ref → SchemaUnresolvableError; URI ref → distinct `schema-uri-reserved` code) in tests/unit/resolve.test.ts and FrontmatterDocument.modeline field in tests/unit/document.test.ts
+- [x] T039 [P] [US4] Write CLI integration tests: set/lint against modeline-governed and standalone files, modeline byte-survival through writes, URI exit 5, lint authority attribution "document" in tests/integration/cli-modeline.test.ts
 
 ### Implementation for User Story 4
 
-- [ ] T040 [US4] Implement modeline scanner/parser in src/lib/modeline.ts (green T037)
-- [ ] T041 [US4] Wire modeline tier into src/lib/resolve.ts and `modeline` field into src/lib/document.ts; implement resolveSchema public function; export Modeline/SchemaRef/GoverningSchema via src/lib/index.ts (green T038/T039)
+- [x] T040 [US4] Implement modeline scanner/parser in src/lib/modeline.ts (green T037)
+- [x] T041 [US4] Wire modeline tier into src/lib/resolve.ts and `modeline` field into src/lib/document.ts; implement resolveSchema public function; export Modeline/SchemaRef/GoverningSchema via src/lib/index.ts (green T038/T039)
 
 **Checkpoint**: All four user stories pass their quickstart scenarios
 

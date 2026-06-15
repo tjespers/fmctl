@@ -2,7 +2,7 @@ import { isAbsolute, resolve as resolvePath } from 'node:path';
 import { FrontmatterDocument } from './document.js';
 import { spliceFields } from './splice.js';
 import type { FieldChange } from './splice.js';
-import { resolveSchema } from './resolve.js';
+import { resolveFromDoc } from './resolve.js';
 import { compileSchema } from './validate.js';
 import { writeVerified } from './writer.js';
 import { FieldNotFoundError, UsageError, ValidationError } from './errors.js';
@@ -80,8 +80,8 @@ export async function setFields(
   const doc = await FrontmatterDocument.load(absPath);
   const fieldChanges: FieldChange[] = names.map((name) => ({ name, value: changes[name] as JsonValue }));
 
-  const governedBy = await resolveSchema(
-    absPath,
+  const governedBy = await resolveFromDoc(
+    doc,
     options.schema !== undefined ? { schema: options.schema } : {},
   );
   const bypassed = options.bypassValidation === true;
