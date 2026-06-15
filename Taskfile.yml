@@ -6,3 +6,13 @@ tasks:
     cmds:
       - pre-commit install
       - npm install
+
+  build:
+    desc: Compile TypeScript to dist/
+    cmds:
+      - npm run build
+
+  test:
+    desc: Run the full test suite once
+    cmds:
+      - npm test
