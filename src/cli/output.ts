@@ -1,5 +1,6 @@
+import { relative } from 'node:path';
 import { FmctlError, ValidationError, serializeValue } from '../lib/index.js';
-import type { JsonValue, SetResult } from '../lib/index.js';
+import type { JsonValue, SetResult, LintResult, FileLintResult } from '../lib/index.js';
 
 /** Render a successful `set` result to stdout (FR-014: results → stdout). */
 export function printSetResult(result: SetResult, json: boolean): void {
@@ -19,6 +20,48 @@ export function printSetResult(result: SetResult, json: boolean): void {
 /** The FR-013 unvalidated-write notice — a diagnostic, so it goes to stderr. */
 export function unvalidatedNotice(file: string): void {
   process.stderr.write(`notice: unvalidated write (no schema resolved for ${file})\n`);
+}
+
+/** Render a lint report to stdout: one line per non-valid file, then a summary. */
+export function printLintResult(result: LintResult, json: boolean): void {
+  if (json) {
+    process.stdout.write(JSON.stringify(result) + '\n');
+    return;
+  }
+  for (const file of result.files) printLintLine(file);
+  const s = result.summary;
+  process.stdout.write(
+    `${s.checked} checked, ${s.valid} valid, ${s.invalid} invalid, ` +
+      `${s.errored} errored, ${s.ungoverned} ungoverned, ${s.skipped} skipped\n`,
+  );
+}
+
+function printLintLine(file: FileLintResult): void {
+  const name = relativize(file.file);
+  switch (file.status) {
+    case 'valid':
+      return; // only non-valid files get a line
+    case 'invalid':
+      for (const v of file.violations) {
+        const detail = v.field ? `${v.field}: ${describe(v.value)} — expected ${v.expected}` : v.message;
+        process.stdout.write(`✗ ${name}  ${detail}\n`);
+      }
+      return;
+    case 'error':
+      process.stdout.write(`✗ ${name}  ${file.error?.message ?? 'error'}\n`);
+      return;
+    case 'ungoverned':
+      process.stdout.write(`! ${name}  ungoverned (no schema)\n`);
+      return;
+    case 'skipped-no-frontmatter':
+      process.stdout.write(`- ${name}  skipped (no frontmatter)\n`);
+      return;
+  }
+}
+
+function relativize(file: string): string {
+  const rel = relative(process.cwd(), file);
+  return rel.startsWith('..') ? file : rel;
 }
 
 /**

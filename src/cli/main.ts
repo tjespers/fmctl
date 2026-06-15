@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command, CommanderError } from 'commander';
 import { registerSet } from './commands/set.js';
+import { registerLint } from './commands/lint.js';
 
 const program = new Command();
 program
@@ -10,6 +11,7 @@ program
   .exitOverride();
 
 registerSet(program);
+registerLint(program);
 
 try {
   await program.parseAsync(process.argv);

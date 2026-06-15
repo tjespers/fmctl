@@ -12,6 +12,9 @@ export type { Field, FrontmatterRegion } from './document.js';
 // Operations (the product capability surface; FR-018)
 export { setFields } from './api.js';
 export type { SetOptions, SetResult, FieldChangeResult } from './api.js';
+export { lintPaths } from './lint.js';
+export type { LintOptions } from './lint.js';
+export type { LintResult, FileLintResult, LintSummary, FileLintStatus, ErrorInfo } from './types.js';
 export { resolveSchema } from './resolve.js';
 export type { ResolveOptions } from './resolve.js';
 

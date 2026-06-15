@@ -35,6 +35,41 @@ export interface Modeline {
   schema: SchemaRef;
 }
 
+/** The serialized form of an FmctlError carried as data inside a lint result. */
+export interface ErrorInfo {
+  code: string;
+  message: string;
+}
+
+export type FileLintStatus =
+  | 'valid'
+  | 'invalid'
+  | 'ungoverned'
+  | 'skipped-no-frontmatter'
+  | 'error';
+
+export interface FileLintResult {
+  file: string;
+  status: FileLintStatus;
+  governedBy: GoverningSchema | null;
+  violations: Violation[];
+  error: ErrorInfo | null;
+}
+
+export interface LintSummary {
+  checked: number;
+  valid: number;
+  invalid: number;
+  ungoverned: number;
+  skipped: number;
+  errored: number;
+}
+
+export interface LintResult {
+  files: FileLintResult[];
+  summary: LintSummary;
+}
+
 /** The outcome of schema resolution for one file (FR-008); `null` = ungoverned. */
 export interface GoverningSchema {
   /**
