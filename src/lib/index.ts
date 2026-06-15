@@ -3,11 +3,20 @@
 // Grows as modules land; see contracts/library-api.md.
 
 // Shared value vocabulary
-export type { Scalar, JsonValue, Violation, SchemaRef, Modeline } from './types.js';
+export type { Scalar, JsonValue, Violation, SchemaRef, Modeline, GoverningSchema } from './types.js';
 
 // Document model
 export { FrontmatterDocument } from './document.js';
 export type { Field, FrontmatterRegion } from './document.js';
+
+// Operations (the product capability surface; FR-018)
+export { setFields } from './api.js';
+export type { SetOptions, SetResult, FieldChangeResult } from './api.js';
+export { resolveSchema } from './resolve.js';
+export type { ResolveOptions } from './resolve.js';
+
+// Value syntax (field=value parsing/rendering, shared with the CLI)
+export { parseValue, serializeValue } from './values.js';
 
 // Typed error hierarchy (exit-code-mapped; research.md R5)
 export {
