@@ -1,0 +1,34 @@
+# Generic commitlint configuration
+# This configuration will be used by this container if no local .commitlintrc.yml is found
+
+extends:
+- "@commitlint/config-conventional"
+parserPreset:
+  parserOpts:
+    issuePrefixes: [ ]
+rules:
+  header-max-length: [ 2, always, 72 ]
+  body-max-line-length: [ 2, always, 72 ]
+  # output warnings when references are missing
+  references-empty: [ 1, never ]
+  scope-enum:
+  - 1
+  - always
+  - [ ] # Changes that affect the docker image
+  type-enum:
+  - 2
+  - always
+  - [
+      build, # Changes that affect the build system or external dependencies (example scopes: gulp, broccoli, npm)
+      chore, # Other changes that don't modify src or test files
+      ci, # Changes to our CI configuration files and scripts (example scopes: Travis, Circle, BrowserStack, SauceLabs)
+      docs, # Documentation only changes
+      feat, # A new feature
+      fix, # A bug fix
+      perf, # A code change that improves performance
+      refactor, # A code change that neither fixes a bug nor adds a feature
+      revert, # Reverts a previous commit
+      style, # Changes that do not affect the meaning of the code (white-space, formatting, missing semi-colons, etc)
+      test, # Adding missing tests or correcting existing tests
+      ui # Changes that solely change the ui (scss / css)
+    ]

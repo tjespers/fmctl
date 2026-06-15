@@ -1,0 +1,8 @@
+version: '3'
+
+tasks:
+  setup:
+    desc: Install git hooks and project dependencies
+    cmds:
+      - pre-commit install
+      - npm install

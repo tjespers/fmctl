@@ -1,0 +1,31 @@
+default_install_hook_types:
+- pre-commit
+- commit-msg
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v6.0.0
+  hooks:
+  # mutating hooks: tests/fixtures is excluded — the golden corpus is
+  # byte-exact and trailing whitespace / missing newlines / CRLF in
+  # fixtures are deliberate test material
+  - id: end-of-file-fixer
+    exclude: ^tests/fixtures/
+  - id: trailing-whitespace
+    exclude: ^tests/fixtures/
+  - id: mixed-line-ending
+    args: [--fix=lf]
+    exclude: ^tests/fixtures/
+  - id: check-merge-conflict
+  - id: check-case-conflict
+  - id: check-added-large-files
+  - id: check-yaml
+    exclude: ^tests/fixtures/
+  - id: check-json
+    exclude: ^tsconfig
+- repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+  rev: v9.25.0
+  hooks:
+  - id: commitlint
+    stages: [commit-msg]
+    additional_dependencies: ['@commitlint/config-conventional']

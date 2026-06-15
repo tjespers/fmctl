@@ -1,50 +1,168 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+==================
+Version change: 1.0.0 → 1.0.1 — Principle III wording clarification (PATCH)
+Modified principles:
+  - III. Refuse Loudly — exit-code mapping clarified: each failure class remains a distinct,
+    exported error type carrying a stable machine-readable code; the CLI maps failure
+    *families* (not individual classes) to distinct, documented exit codes, with the precise
+    class always identifiable from machine-readable output. Aligns the text with the intended
+    design (spec 001 FR-015, research.md R5): a memorizable exit-code table for agents, with
+    the JSON `code` field carrying the precise class.
+Added sections: none
+Removed sections: none
+Templates: ✅ no template changes required
+Follow-up TODOs: none
+-->
+
+# fmctl Constitution
+
+fmctl (frontmatter-control) is a TypeScript library and CLI for managing YAML frontmatter
+across a folder of inter-linked Markdown files. The CLI ships on day one; the same core will
+later be consumed as a library inside a Node.js backend. Its primary users are one developer
+and the AI agents working alongside him, dogfooding on a project whose entire state lives in
+Markdown. The tool's product is trust in its edits; every principle below exists to protect
+that trust.
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Byte-Level Conservatism (NON-NEGOTIABLE)
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+A write MUST change only the bytes of the fields it was asked to change. Everything else in the
+file — comments (block and inline), key order, quoting style, indentation, whitespace, blank
+lines, and the entire Markdown body — MUST survive byte-for-byte.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+- The Markdown body is never parsed; files are split at the frontmatter delimiters and the body
+  is carried through untouched.
+- The editing approach is parse-to-locate, splice-to-write: the YAML parser is used to find the
+  exact byte range of a value; the new value is spliced into the original source text.
+- Re-serializing a whole document (or any node the user did not ask to change) on a write path
+  is prohibited, regardless of how convenient it would be.
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+**Rationale**: The project this tool serves keeps full-copy version history; any reformatting
+turns a one-line change into an unreadable diff. A 2026-06-10 spike proved that even
+careful in-place node mutation followed by document re-serialization normalizes untouched lines
+(spacing collapsed, flow collections rewritten) — splicing is the only approach that meets this
+guarantee, so this principle exists to protect it from future "convenience" regressions.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### II. Verify-or-Revert Writes
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+A mutation is not complete when the bytes are written; it is complete when fmctl has verified
+its own output. Every write MUST be atomic (write to a temporary file, then rename). After
+writing, fmctl MUST re-parse the result and confirm both that the parsed data matches the
+intended change and that the textual diff against the original touches only the expected lines.
+On any anomaly the original content MUST be restored and the command MUST exit non-zero. fmctl
+MUST never leave a file in a state it did not verify.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+**Rationale**: The tool edits files that are the system of record. A splice bug that silently
+corrupts a file is the one failure mode that destroys the tool's reason to exist; runtime
+self-verification makes that failure mode loud and recoverable.
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+### III. Refuse Loudly
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+When fmctl encounters a file whose frontmatter is malformed (broken YAML, missing or mangled
+delimiters), it MUST refuse to operate on it: no best-effort reads, no writes, and no "repair"
+beyond what was explicitly asked. Errors MUST name the file and the specific problem. Each
+failure class MUST exist as a distinct, exported error type in the library carrying a stable
+machine-readable code; the CLI MUST map each failure family to a distinct, documented exit
+code, with the precise class always identifiable from machine-readable output. Identical
+inputs MUST produce identical outcomes — no heuristic or environment-dependent behavior on
+the failure path.
+
+**Rationale**: AI agents, not humans, hit these walls most often. An agent can recover cleanly
+from a predictable hard wall; it cannot recover from silent salvage that returns plausible but
+wrong data.
+
+### IV. Test-First, No Exceptions (NON-NEGOTIABLE)
+
+All production code follows red-green-refactor — the CLI surface included. Tests MUST be
+written first and observed to fail before the implementation is written. The splice engine
+additionally maintains a golden-file fixture corpus of hostile real-world frontmatter
+(comments, inline comments, odd spacing, flow collections, quoting variations) with byte-level
+diff assertions.
+
+**Rationale**: Most of this codebase is AI-written. Tests are the executable specification and
+the human's primary lever for trusting code he did not write line-by-line. The discipline is
+deliberately chosen over weekend velocity; scope flexes before rigor does.
+
+### V. Agent-First Ergonomics
+
+Machine consumers are first-class users, not an afterthought. Every command MUST offer
+machine-readable output (`--json`). Data goes to stdout; diagnostics go to stderr. Exit codes
+are deterministic, documented, and form a stable contract. Error messages MUST be actionable by
+an agent without a human interpreting them — they state what failed, on which file, and what a
+valid retry looks like.
+
+**Rationale**: Half the user base parses output rather than reads it. Ergonomics for agents is
+ergonomics for the primary workflow.
+
+### VI. Boring Code, Lean Dependencies
+
+Prefer boring, auditable choices over clever ones — human review bandwidth is the scarcest
+resource in an AI-written codebase. Every new runtime dependency MUST earn its place: it does
+something material that the standard library or an existing dependency cannot, and it is
+well-maintained and widely used. When in doubt, write the small thing instead of importing the
+large thing.
+
+### VII. Library-First, Prove Before Grow
+
+fmctl is a library with a CLI as its first consumer — not a CLI with extractable internals. All
+capability lives in the library's public API, and the CLI MUST consume the library exclusively
+through that public API; imports of library internals from CLI code are prohibited. If the CLI
+needs something the public API does not expose, the API is incomplete — extend the API, never
+bypass it.
+
+Features earn their way in through dogfooding: a capability layer is added only after the layer
+below it is proven in real use. No speculative features, no APIs built for imagined future
+needs.
+
+**Rationale**: A second consumer already exists in planning — a Node.js backend that will import
+fmctl as an npm package. Enforcing the library boundary from day one, with the CLI as reference
+consumer, keeps the public API honest and complete before that consumer arrives.
+
+## Technical Constraints
+
+- **Language/runtime**: TypeScript on Node.js with `strict` mode enabled; MUST run on Linux and
+  macOS.
+- **Dual surface**: one package exposing both a library entry point and a CLI binary. The
+  exported type declarations are part of the public API contract. The library reads and writes
+  the filesystem, so it is a server-side (Node) dependency — browser compatibility is a
+  non-goal.
+- **YAML engine**: `yaml` (eemeli). Its role on write paths is locating nodes via source ranges
+  and validating; whole-document serialization is reserved for read/derived output, never for
+  writing a user's file (Principle I).
+- **Scale envelope**: designed for hundreds to low thousands of Markdown files per project.
+  Performance is secondary to correctness; optimization work requires a measured problem first.
+- **Distribution**: local development usage for v0.x. No packaging, installers, or single-binary
+  builds until the core has proven itself in dogfooding (Principle VII).
+
+## Development Workflow
+
+- **Process**: SpecKit with light ceremony — one-page specs, then plan, then tasks, then
+  implementation. Heavy artifacts are produced only when they pay for themselves.
+- **Commits**: every commit message follows the Conventional Commits specification, enforced by
+  a commit-msg hook — the same wall for humans and agents.
+- **Constitution gate**: every implementation plan passes the Constitution Check before research
+  and design begin, and re-checks after design.
+- **Spec compliance**: implementation is reviewed against its spec (functional requirement
+  coverage) before merge.
+- **Test gate**: TDD per Principle IV; the full test suite passes before merge.
+- **Deviations**: any violation of a principle is recorded in the plan's Complexity Tracking
+  table with a justification and the simpler alternative that was rejected — or the design is
+  simplified until no violation remains.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes all other development practices in this repository. Amendments are
+made by editing this file in a reviewed change that includes a version bump, the rationale, and
+synchronization of all dependent templates and guidance documents.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+Versioning follows semantic versioning: MAJOR for removing or redefining a principle in a
+backward-incompatible way, MINOR for adding a principle or materially expanding guidance, PATCH
+for clarifications and wording fixes.
+
+Compliance is verified at two points: the Constitution Check gate in every plan, and review of
+every implementation against its spec and these principles. Unjustified complexity is rejected,
+not tolerated.
+
+**Version**: 1.0.1 | **Ratified**: 2026-06-10 | **Last Amended**: 2026-06-12
