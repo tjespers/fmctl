@@ -166,11 +166,11 @@ data fields; URI ref exits 5; modeline survives writes byte-for-byte
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T042 [P] Write agent round-trip integration test: scripted get → set --json → lint --json cycle consuming only JSON stdout/stderr + exit codes (SC-004, quickstart scenario 10) in tests/integration/agent-roundtrip.test.ts
-- [ ] T043 [P] Write performance test: generate 1,000 governed files in a temp dir, assert lint wall-clock < 10 s, tagged slow (SC-007, quickstart scenario 11) in tests/integration/perf-lint.test.ts
-- [ ] T044 [P] Write README.md: usage for all three commands, modeline syntax, exit-code table (the documented contract per FR-015), library-consumer example
-- [ ] T046 Execute quickstart.md scenarios 1–9 manually against the built binary and dogfood on the author's real project with ≥20 seeded violations; record results in specs/001-schema-governed-frontmatter/quickstart-results.md (SC-001–SC-006)
-- [ ] T047 Final pass: `npm run build && npm test` green, pre-commit hooks green, no constitution violations (re-read gate table in plan.md)
+- [x] T042 [P] Write agent round-trip integration test: scripted get → set --json → lint --json cycle consuming only JSON stdout/stderr + exit codes (SC-004, quickstart scenario 10) in tests/integration/agent-roundtrip.test.ts
+- [x] T043 [P] Write performance test: generate 1,000 governed files in a temp dir, assert lint wall-clock < 10 s, tagged slow (SC-007, quickstart scenario 11) in tests/integration/perf-lint.test.ts
+- [x] T044 [P] Write README.md: usage for all three commands, modeline syntax, exit-code table (the documented contract per FR-015), library-consumer example
+- [x] T046 Execute quickstart.md scenarios 1–9 manually against the built binary and dogfood on the author's real project with ≥20 seeded violations; record results in specs/001-schema-governed-frontmatter/quickstart-results.md (SC-001–SC-006)
+- [x] T047 Final pass: `npm run build && npm test` green, pre-commit hooks green, no constitution violations (re-read gate table in plan.md)
 
 ---
 
