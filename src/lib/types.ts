@@ -34,3 +34,15 @@ export interface Modeline {
   /** The parsed `$schema=` directive. */
   schema: SchemaRef;
 }
+
+/** The outcome of schema resolution for one file (FR-008); `null` = ungoverned. */
+export interface GoverningSchema {
+  /**
+   * On whose say-so the schema governs: `invocation` = per-invocation override
+   * (`--schema` / library option); `document` = the file's own modeline.
+   * `'project'` is reserved for the future configuration spec.
+   */
+  authority: 'invocation' | 'document';
+  /** Absolute path of the governing schema document. */
+  location: string;
+}

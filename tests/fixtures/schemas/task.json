@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["status", "type"],
+  "properties": {
+    "status": { "enum": ["draft", "review", "done"] },
+    "type": { "enum": ["task", "decision"] },
+    "links": { "type": "array", "items": { "type": "string" } },
+    "priority": { "enum": ["low", "high"] }
+  }
+}
