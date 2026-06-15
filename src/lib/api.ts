@@ -5,8 +5,28 @@ import type { FieldChange } from './splice.js';
 import { resolveSchema } from './resolve.js';
 import { compileSchema } from './validate.js';
 import { writeVerified } from './writer.js';
-import { UsageError, ValidationError } from './errors.js';
+import { FieldNotFoundError, UsageError, ValidationError } from './errors.js';
 import type { GoverningSchema, JsonValue } from './types.js';
+
+export interface GetResult {
+  file: string;
+  field: string;
+  value: JsonValue;
+}
+
+/**
+ * Read one top-level frontmatter field (FR-001). Field names are literal
+ * top-level keys — a dotted name is looked up literally, not as a nested path.
+ */
+export async function getField(filePath: string, field: string): Promise<GetResult> {
+  const absPath = isAbsolute(filePath) ? filePath : resolvePath(process.cwd(), filePath);
+  const doc = await FrontmatterDocument.load(absPath);
+  const located = doc.field(field);
+  if (!located) {
+    throw new FieldNotFoundError(`field not found: "${field}" in ${absPath}`, { file: absPath, field });
+  }
+  return { file: absPath, field, value: located.value };
+}
 
 export interface SetOptions {
   /** Per-invocation override: absolute or cwd-relative path. */

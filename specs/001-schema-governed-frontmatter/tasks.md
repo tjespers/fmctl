@@ -128,13 +128,13 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 3 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T032 [P] [US3] Write getField unit tests (scalar, list, object-valued field returned in full as JsonValue, FieldNotFoundError incl. on an empty frontmatter block, NoFrontmatterError, ParseError pass-through) in tests/unit/api.get.test.ts
-- [ ] T033 [P] [US3] Write CLI integration tests for `fmctl get` (plain value, flow-list rendering, `--json` GetResult shape, exit 0/3/4) in tests/integration/cli-get.test.ts
+- [x] T032 [P] [US3] Write getField unit tests (scalar, list, object-valued field returned in full as JsonValue, FieldNotFoundError incl. on an empty frontmatter block, NoFrontmatterError, ParseError pass-through) in tests/unit/api.get.test.ts
+- [x] T033 [P] [US3] Write CLI integration tests for `fmctl get` (plain value, flow-list rendering, `--json` GetResult shape, exit 0/3/4) in tests/integration/cli-get.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T034 [US3] Implement getField and export via src/lib/index.ts (green T032)
-- [ ] T035 [US3] Implement `get` command in src/cli/commands/get.ts (green T033)
+- [x] T034 [US3] Implement getField and export via src/lib/index.ts (green T032)
+- [x] T035 [US3] Implement `get` command in src/cli/commands/get.ts (green T033)
 
 **Checkpoint**: All read/write/validate primitives shipped
 

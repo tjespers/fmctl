@@ -1,6 +1,15 @@
 import { relative } from 'node:path';
 import { FmctlError, ValidationError, serializeValue } from '../lib/index.js';
-import type { JsonValue, SetResult, LintResult, FileLintResult } from '../lib/index.js';
+import type { JsonValue, SetResult, GetResult, LintResult, FileLintResult } from '../lib/index.js';
+
+/** Render a `get` result to stdout — plain value for humans, JSON on request. */
+export function printGetResult(result: GetResult, json: boolean): void {
+  if (json) {
+    process.stdout.write(JSON.stringify(result) + '\n');
+    return;
+  }
+  process.stdout.write(serializeValue(result.value) + '\n');
+}
 
 /** Render a successful `set` result to stdout (FR-014: results → stdout). */
 export function printSetResult(result: SetResult, json: boolean): void {

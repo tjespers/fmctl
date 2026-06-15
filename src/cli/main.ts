@@ -2,6 +2,7 @@
 import { Command, CommanderError } from 'commander';
 import { registerSet } from './commands/set.js';
 import { registerLint } from './commands/lint.js';
+import { registerGet } from './commands/get.js';
 
 const program = new Command();
 program
@@ -10,6 +11,7 @@ program
   .version('0.1.0')
   .exitOverride();
 
+registerGet(program);
 registerSet(program);
 registerLint(program);
 
