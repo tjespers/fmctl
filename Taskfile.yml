@@ -16,3 +16,8 @@ tasks:
     desc: Run the full test suite once
     cmds:
       - npm test
+
+  test:coverage:
+    desc: Run the test suite with a coverage report
+    cmds:
+      - npm run test:coverage

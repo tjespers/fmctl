@@ -10,5 +10,10 @@ export default defineConfig({
     passWithNoTests: true,
     // The lint performance test (SC-007) is heavy; it self-gates on RUN_SLOW
     // (see tests/integration/perf-lint.test.ts) so the default run stays fast.
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.ts'],
+      reporter: ['text', 'html'],
+    },
   },
 });

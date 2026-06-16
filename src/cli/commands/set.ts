@@ -2,6 +2,7 @@ import type { Command } from 'commander';
 import { setFields, parseValue, UsageError } from '../../lib/index.js';
 import type { JsonValue } from '../../lib/index.js';
 import { printSetResult, unvalidatedNotice, fail } from '../output.js';
+import { setExit } from '../exit.js';
 
 export function registerSet(program: Command): void {
   program
@@ -22,9 +23,9 @@ export function registerSet(program: Command): void {
         });
         printSetResult(result, json);
         if (!result.validated && !result.bypassed) unvalidatedNotice(result.file);
-        process.exitCode = 0;
+        setExit(0);
       } catch (err) {
-        process.exitCode = fail(err, json);
+        setExit(fail(err, json));
       }
     });
 }

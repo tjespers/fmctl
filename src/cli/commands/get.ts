@@ -1,6 +1,7 @@
 import type { Command } from 'commander';
 import { getField } from '../../lib/index.js';
 import { printGetResult, fail } from '../output.js';
+import { setExit } from '../exit.js';
 
 export function registerGet(program: Command): void {
   program
@@ -15,9 +16,9 @@ export function registerGet(program: Command): void {
       try {
         const result = await getField(file, field);
         printGetResult(result, json);
-        process.exitCode = 0;
+        setExit(0);
       } catch (err) {
-        process.exitCode = fail(err, json);
+        setExit(fail(err, json));
       }
     });
 }

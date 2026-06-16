@@ -2,6 +2,7 @@ import type { Command } from 'commander';
 import { lintPaths } from '../../lib/index.js';
 import type { LintResult } from '../../lib/index.js';
 import { printLintResult, fail } from '../output.js';
+import { setExit } from '../exit.js';
 
 export function registerLint(program: Command): void {
   program
@@ -16,9 +17,9 @@ export function registerLint(program: Command): void {
         const roots = paths.length > 0 ? paths : ['.'];
         const result = await lintPaths(roots, opts.schema !== undefined ? { schema: opts.schema } : {});
         printLintResult(result, json);
-        process.exitCode = decideExit(result, opts.schema !== undefined, json);
+        setExit(decideExit(result, opts.schema !== undefined, json));
       } catch (err) {
-        process.exitCode = fail(err, json);
+        setExit(fail(err, json));
       }
     });
 }
