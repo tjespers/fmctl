@@ -44,12 +44,16 @@ links: [./other.md]
 EOF
 ```
 
-## Scenario 1 — read a field (US3)
+## Scenario 1 — read a field, or the whole frontmatter (US3)
 
 ```sh
 fmctl get task.md status               # → draft           (exit 0)
 fmctl get task.md status --json        # → {"file":...,"field":"status","value":"draft"}
 fmctl get task.md missing; echo $?     # → error, exit 3
+
+# whole-frontmatter read (omit the field):
+fmctl get task.md                      # → one `field: value` line per entry
+fmctl get task.md --json               # → {"file":...,"frontmatter":{"status":"draft",...}}
 ```
 
 ## Scenario 2 — validated surgical edit (US1, SC-001/SC-002)

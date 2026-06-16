@@ -174,6 +174,22 @@ data fields; URI ref exits 5; modeline survives writes byte-for-byte
 
 ---
 
+## Phase 8: Amendment — Whole-Frontmatter Read (User Story 3)
+
+**Context**: A v0.1 scope addition decided after the original spec, routed back through
+`/speckit.specify` (spec FR-001 broadened; US3 scenarios 5–6). `get` gains the ability to read
+a file's entire frontmatter when no field is named. Library-first and TDD as before.
+
+- [x] T048 [US3] Extend getField unit tests with getFrontmatter cases (whole frontmatter as JSON-representable data; empty block → `{}`; NoFrontmatterError/ParseError pass-through; modeline never surfaced as a field) in tests/unit/api.get.test.ts — observe failing
+- [x] T049 [US3] Implement `getFrontmatter(filePath)` returning `FrontmatterResult { file, frontmatter }` in src/lib/api.ts and export it (+ the type) via src/lib/index.ts (green T048)
+- [x] T050 [US3] Make the `get` command's `field` argument optional and branch to whole-read in src/cli/commands/get.ts; add `printFrontmatter` (one `field: value` line per entry, or JSON) in src/cli/output.ts
+- [x] T051 [US3] Extend CLI tests — in-process (tests/unit/cli.test.ts) and integration (tests/integration/cli-get.test.ts): whole-read JSON shape `{file, frontmatter}`, human `field: value` lines, exit 3 on a no-frontmatter file
+- [x] T052 Update README.md `get` usage and the library-consumer example, and extend quickstart.md Scenario 1, to cover whole-frontmatter read (resolves analyze finding C1)
+
+**Checkpoint**: `fmctl get <file>` returns the whole block; quickstart scenario 1 extended; build + full suite green
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies

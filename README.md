@@ -26,14 +26,17 @@ This produces the `fmctl` CLI at `dist/cli/main.js` and a library entry at
 
 ## Commands
 
-### `fmctl get <file> <field> [--json] [--schema <path>]`
+### `fmctl get <file> [field] [--json] [--schema <path>]`
 
-Read one top-level field. Field names are literal top-level keys (no nested
-addressing). `--schema` is accepted for symmetry; reads never validate.
+Read one top-level field, or — when `field` is omitted — the whole frontmatter.
+Field names are literal top-level keys (no nested addressing). `--schema` is
+accepted for symmetry; reads never validate.
 
 ```sh
 fmctl get task.md status            # → draft
 fmctl get task.md links --json      # → {"file":"…","field":"links","value":["./a.md"]}
+fmctl get task.md                   # → every field, one `field: value` line
+fmctl get task.md --json            # → {"file":"…","frontmatter":{"status":"draft",…}}
 ```
 
 ### `fmctl set <file> <field>=<value>... [--json] [--schema <path>] [--no-validate]`
@@ -122,9 +125,10 @@ The CLI is one consumer of the library; every capability is available
 programmatically through the package entry point.
 
 ```ts
-import { getField, setFields, lintPaths } from '@tjespers/fmctl';
+import { getField, getFrontmatter, setFields, lintPaths } from '@tjespers/fmctl';
 
 const { value } = await getField('task.md', 'status');
+const { frontmatter } = await getFrontmatter('task.md'); // the whole block at once
 
 const result = await setFields(
   'task.md',

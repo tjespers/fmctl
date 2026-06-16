@@ -26,6 +26,21 @@ type JsonValue = Scalar | JsonValue[] | { [key: string]: JsonValue };
 Throws: `FileNotFoundError`, `NoFrontmatterError`, `ParseError`, `DuplicateKeyError`,
 `NotRepresentableError`, `FieldNotFoundError`.
 
+### `getFrontmatter(filePath: string): Promise<FrontmatterResult>`
+
+Reads a file's entire frontmatter as JSON-representable data in one call (FR-001). The modeline
+is never surfaced as a field; an empty block yields an empty `frontmatter` object. Reads never
+validate.
+
+```ts
+interface FrontmatterResult {
+  file: string;                          // absolute path
+  frontmatter: Record<string, JsonValue>; // every top-level field, whole values
+}
+```
+
+Throws: everything `getField` throws **except** `FieldNotFoundError` (there is no field lookup).
+
 ### `setFields(filePath: string, changes: Record<string, JsonValue>, options?: SetOptions): Promise<SetResult>`
 
 Updates and/or creates one or more top-level fields atomically — all changes validate and land
@@ -84,9 +99,9 @@ public surface. (FR-008)
 
 ## Exported types & errors
 
-- Types: `GetResult`, `SetOptions`, `SetResult`, `LintOptions`, `LintResult`,
-  `FileLintResult`, `ErrorInfo`, `Violation`, `GoverningSchema`, `Modeline`, `SchemaRef`,
-  `Scalar`, `JsonValue`.
+- Types: `GetResult`, `FrontmatterResult`, `SetOptions`, `SetResult`, `LintOptions`,
+  `LintResult`, `FileLintResult`, `ErrorInfo`, `Violation`, `GoverningSchema`, `Modeline`,
+  `SchemaRef`, `Scalar`, `JsonValue`.
 - Errors: `FmctlError` (abstract base: `code: string`, `exitCode: number`, `file?: string`,
   `field?: string`), `UsageError`, `NotFoundError`, `FileNotFoundError`, `NoFrontmatterError`,
   `FieldNotFoundError`, `ParseError`, `DuplicateKeyError`, `NotRepresentableError`,

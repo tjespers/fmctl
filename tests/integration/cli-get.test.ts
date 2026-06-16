@@ -38,4 +38,20 @@ describe('fmctl get (integration)', () => {
     const run = runCli(['get', join(FIXTURES_ROOT, 'splice', 'broken-yaml.md'), 'status']);
     expect(run.status).toBe(4);
   });
+
+  it('reads the whole frontmatter as JSON when no field is given', () => {
+    const run = runCli(['get', simple, '--json']);
+    expect(run.status).toBe(0);
+    expect(JSON.parse(run.stdout)).toEqual({
+      file: simple,
+      frontmatter: { status: 'draft', type: 'task', links: ['./other.md'] },
+    });
+  });
+
+  it('renders the whole frontmatter as field: value lines for humans', () => {
+    const run = runCli(['get', simple]);
+    expect(run.status).toBe(0);
+    expect(run.stdout).toContain('status: draft');
+    expect(run.stdout).toContain('type: task');
+  });
 });

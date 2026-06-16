@@ -59,6 +59,28 @@ describe('CLI (in-process)', () => {
       const r = await cli('get', scratchFile('splice/simple.md'), 'nope');
       expect(r.code).toBe(3);
     });
+
+    it('reads the whole frontmatter when no field is given (JSON)', async () => {
+      const file = scratchFile('splice/simple.md');
+      const r = await cli('get', file, '--json');
+      expect(r.code).toBe(0);
+      expect(JSON.parse(r.stdout)).toEqual({
+        file,
+        frontmatter: { status: 'draft', type: 'task', links: ['./other.md'] },
+      });
+    });
+
+    it('reads the whole frontmatter as field: value lines (human)', async () => {
+      const r = await cli('get', scratchFile('splice/simple.md'));
+      expect(r.code).toBe(0);
+      expect(r.stdout).toContain('status: draft');
+      expect(r.stdout).toContain('links: [ ./other.md ]');
+    });
+
+    it('exit 3 reading the whole frontmatter of a file with no block', async () => {
+      const r = await cli('get', scratchFile('splice/no-frontmatter.md'));
+      expect(r.code).toBe(3);
+    });
   });
 
   describe('set', () => {

@@ -38,3 +38,9 @@
   design-phase decisions recorded under Assumptions.
 - References to "JSON Schema", "YAML comment", "JSON output mode", and exit codes are
   user-visible contract/standard choices made by the product owner, not implementation leakage.
+- **Re-validated 2026-06-16** after the whole-frontmatter-read amendment (FR-001 broadened;
+  User Story 3 retitled "Read Frontmatter: a Field or the Whole Block" with scenarios 5–6;
+  empty-block edge case and Assumptions updated). All items still pass: no implementation
+  details added, no clarification markers, scenarios testable, scope re-bounded (single-file
+  whole-read in scope; folder-wide querying remains out of scope). The amendment was decided
+  after the original spec and routed back through `/speckit.specify`.

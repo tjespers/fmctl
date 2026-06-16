@@ -14,6 +14,23 @@ export interface GetResult {
   value: JsonValue;
 }
 
+export interface FrontmatterResult {
+  file: string;
+  frontmatter: Record<string, JsonValue>;
+}
+
+/**
+ * Read a file's entire frontmatter as JSON-representable data (FR-001). The
+ * modeline is never surfaced as a field; an empty block yields an empty object.
+ * Throws the same loading errors as {@link getField} except FieldNotFoundError
+ * (there is no field lookup). Reads never validate.
+ */
+export async function getFrontmatter(filePath: string): Promise<FrontmatterResult> {
+  const absPath = isAbsolute(filePath) ? filePath : resolvePath(process.cwd(), filePath);
+  const doc = await FrontmatterDocument.load(absPath);
+  return { file: absPath, frontmatter: doc.data };
+}
+
 /**
  * Read one top-level frontmatter field (FR-001). Field names are literal
  * top-level keys — a dotted name is looked up literally, not as a nested path.

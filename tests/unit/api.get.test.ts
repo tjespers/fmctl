@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { join } from 'node:path';
-import { getField } from '../../src/lib/api';
+import { getField, getFrontmatter } from '../../src/lib/api';
 import { FieldNotFoundError, NoFrontmatterError, ParseError } from '../../src/lib/errors';
 import { FIXTURES_ROOT } from '../helpers/corpus';
 
@@ -41,5 +41,33 @@ describe('getField', () => {
     await expect(getField(join(FIXTURES_ROOT, 'splice', 'broken-yaml.md'), 'status')).rejects.toBeInstanceOf(
       ParseError,
     );
+  });
+});
+
+describe('getFrontmatter', () => {
+  it('returns the whole frontmatter as JSON-representable data', async () => {
+    const result = await getFrontmatter(simple);
+    expect(result.file).toBe(simple);
+    expect(result.frontmatter).toEqual({ status: 'draft', type: 'task', links: ['./other.md'] });
+  });
+
+  it('returns an empty object for an empty frontmatter block', async () => {
+    const result = await getFrontmatter(join(FIXTURES_ROOT, 'splice', 'empty-block.md'));
+    expect(result.frontmatter).toEqual({});
+  });
+
+  it('throws NoFrontmatterError when there is no block', async () => {
+    await expect(getFrontmatter(join(FIXTURES_ROOT, 'splice', 'no-frontmatter.md'))).rejects.toBeInstanceOf(
+      NoFrontmatterError,
+    );
+  });
+
+  it('passes through ParseError on malformed frontmatter', async () => {
+    await expect(getFrontmatter(join(FIXTURES_ROOT, 'splice', 'broken-yaml.md'))).rejects.toBeInstanceOf(ParseError);
+  });
+
+  it('never surfaces the modeline as a field', async () => {
+    const result = await getFrontmatter(join(FIXTURES_ROOT, 'modeline', 'governed.md'));
+    expect(result.frontmatter).toEqual({ status: 'draft', type: 'task' });
   });
 });

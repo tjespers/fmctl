@@ -1,6 +1,13 @@
 import { relative } from 'node:path';
 import { FmctlError, ValidationError, serializeValue } from '../lib/index.js';
-import type { JsonValue, SetResult, GetResult, LintResult, FileLintResult } from '../lib/index.js';
+import type {
+  JsonValue,
+  SetResult,
+  GetResult,
+  FrontmatterResult,
+  LintResult,
+  FileLintResult,
+} from '../lib/index.js';
 
 /** Render a `get` result to stdout — plain value for humans, JSON on request. */
 export function printGetResult(result: GetResult, json: boolean): void {
@@ -9,6 +16,17 @@ export function printGetResult(result: GetResult, json: boolean): void {
     return;
   }
   process.stdout.write(serializeValue(result.value) + '\n');
+}
+
+/** Render a whole-frontmatter read — one `field: value` line per entry, or JSON. */
+export function printFrontmatter(result: FrontmatterResult, json: boolean): void {
+  if (json) {
+    process.stdout.write(JSON.stringify(result) + '\n');
+    return;
+  }
+  for (const [field, value] of Object.entries(result.frontmatter)) {
+    process.stdout.write(`${field}: ${serializeValue(value)}\n`);
+  }
 }
 
 /** Render a successful `set` result to stdout (FR-014: results → stdout). */

@@ -15,13 +15,23 @@ The `fmctl` binary is a thin adapter over the library contract
   `{ "error": { "code": string, "message": string, "file"?: string, "field"?: string,
   "violations"?: Violation[] } }`.
 
-## `fmctl get <file> <field> [--json] [--schema <path>]`
+## `fmctl get <file> [field] [--json] [--schema <path>]`
 
-Read one top-level field. (`--schema` is accepted for symmetry; reads never validate.)
+Read one top-level field, or — when `field` is omitted — the whole frontmatter. (`--schema` is
+accepted for symmetry; reads never validate.)
+
+**One field** (`get <file> <field>`):
 
 - Human: the value printed plainly (lists and objects as YAML flow, e.g. `[./a.md, ./b.md]`).
 - JSON: `{ "file": "...", "field": "status", "value": "draft" }`
 - Exit: `0` found · `3` file/frontmatter/field missing · `4` malformed · `2` usage.
+
+**Whole frontmatter** (`get <file>`):
+
+- Human: one `field: value` line per entry (values as YAML flow), in document order.
+- JSON: `{ "file": "...", "frontmatter": { "status": "draft", "type": "task" } }`
+- An empty frontmatter block yields `{}`; a file with no block exits `3`.
+- Exit: `0` read · `3` file/frontmatter missing · `4` malformed · `2` usage.
 
 ## `fmctl set <file> <field>=<value>... [--json] [--schema <path>] [--no-validate]`
 
