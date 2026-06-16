@@ -1,5 +1,9 @@
 # fmctl
 
+[![npm version](https://img.shields.io/npm/v/@tjespers/fmctl.svg)](https://www.npmjs.com/package/@tjespers/fmctl)
+[![CI](https://github.com/tjespers/fmctl/actions/workflows/ci.yml/badge.svg)](https://github.com/tjespers/fmctl/actions/workflows/ci.yml)
+[![license: Apache-2.0](https://img.shields.io/npm/l/@tjespers/fmctl.svg)](LICENSE)
+
 Manage the YAML frontmatter of Markdown files as **schema-governed state**.
 
 `fmctl` reads, edits, and validates frontmatter for any frontmatter'd Markdown
@@ -10,10 +14,19 @@ state without explicitly bypassing validation — and edits are **surgical**, so
 only the changed field's bytes differ. Every command serves humans and agents
 equally (machine-readable output, predictable exit codes).
 
-> v0.1 is local-development software. Build it and run the `fmctl` binary from
-> this checkout; it is not published yet.
+## Install
 
-## Build
+```sh
+npm install -g @tjespers/fmctl   # the `fmctl` CLI on your PATH
+npm install @tjespers/fmctl      # the library (see "Library" below)
+```
+
+Requires Node.js ≥ 22. Pre-1.0: the CLI and library surfaces may still change
+between minor versions.
+
+## Build from source
+
+For local development, build and run the binary straight from a checkout:
 
 ```sh
 task setup        # pre-commit hooks + npm install
@@ -143,3 +156,7 @@ const report = await lintPaths(['docs'], { schema: './schema.json' });
 
 Typed errors (`ValidationError`, `ParseError`, `VerificationError`, …) extend a
 common `FmctlError` base carrying a stable `code` and an `exitCode`.
+
+## License
+
+[Apache-2.0](LICENSE) © Tim Jespers
