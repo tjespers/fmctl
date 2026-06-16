@@ -1,8 +1,27 @@
 {
   "name": "@tjespers/fmctl",
-  "version": "0.0.0",
-  "private": true,
+  "version": "0.1.0",
   "description": "Manage YAML frontmatter across folders of inter-linked Markdown files",
+  "keywords": [
+    "frontmatter",
+    "yaml",
+    "markdown",
+    "cli",
+    "yaml-frontmatter",
+    "markdown-metadata",
+    "json-schema",
+    "frontmatter-cli"
+  ],
+  "homepage": "https://github.com/tjespers/fmctl#readme",
+  "bugs": {
+    "url": "https://github.com/tjespers/fmctl/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tjespers/fmctl.git"
+  },
+  "license": "Apache-2.0",
+  "author": "Tim Jespers",
   "type": "module",
   "exports": {
     ".": {
@@ -16,11 +35,15 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "build": "tsc",
+    "prepublishOnly": "npm run build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },

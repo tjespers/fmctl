@@ -23,6 +23,18 @@ repos:
     exclude: ^tests/fixtures/
   - id: check-json
     exclude: ^tsconfig
+- repo: https://github.com/Lucas-C/pre-commit-hooks
+  rev: v1.5.5
+  hooks:
+  # Apache-2.0 header on every first-party TS source file (constitution
+  # v1.1.0, Development Workflow → License headers). Inserts on new files,
+  # fails the commit when missing. fixtures are excluded as test material.
+  - id: insert-license
+    name: insert apache-2.0 license header
+    files: ^(src|tests)/.*\.ts$
+    args:
+    - --license-filepath=.license-header.txt
+    - --comment-style=//
 - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
   rev: v9.25.0
   hooks:

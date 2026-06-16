@@ -1,18 +1,27 @@
 <!--
 Sync Impact Report
 ==================
-Version change: 1.0.0 → 1.0.1 — Principle III wording clarification (PATCH)
-Modified principles:
-  - III. Refuse Loudly — exit-code mapping clarified: each failure class remains a distinct,
-    exported error type carrying a stable machine-readable code; the CLI maps failure
-    *families* (not individual classes) to distinct, documented exit codes, with the precise
-    class always identifiable from machine-readable output. Aligns the text with the intended
-    design (spec 001 FR-015, research.md R5): a memorizable exit-code table for agents, with
-    the JSON `code` field carrying the precise class.
-Added sections: none
+Version change: 1.0.1 → 1.1.0 — MINOR: distribution graduates to a published npm package;
+  new License-headers workflow rule.
+Modified sections:
+  - Technical Constraints → Distribution: was "local development usage for v0.x; no packaging
+    until the core has proven itself in dogfooding". Now: published as the public npm package
+    @tjespers/fmctl (library entry point + `fmctl` CLI binary), with automated,
+    provenance-signed releases — Conventional Commits drive version bumps and CHANGELOG
+    generation (release-please), a GitHub Release is the cut point, and CI publishes to npm via
+    OIDC trusted publishing (no long-lived tokens). The Principle VII dogfooding gate is met
+    (spec 001 implemented and in real use); this is the graduation VII anticipates, not a
+    relaxation of the prove-before-grow rule.
+  - Development Workflow: added "License headers" — the standard Apache-2.0 header is required
+    on every first-party source file (TypeScript under src/ and tests/), enforced by a
+    pre-commit hook, mirroring the existing Conventional Commits wall.
+Added sections: none (Distribution reworded in place; one Development Workflow bullet added)
 Removed sections: none
-Templates: ✅ no template changes required
-Follow-up TODOs: none
+Templates: ✅ plan/spec/tasks/checklist templates reference no distribution or licensing
+  constraint — no changes required
+Follow-up TODOs:
+  - README.md "it is not published yet" line goes stale once the first npm release ships;
+    update install instructions then (tracked on the chore/release-automation branch).
 -->
 
 # fmctl Constitution
@@ -133,8 +142,14 @@ consumer, keeps the public API honest and complete before that consumer arrives.
   writing a user's file (Principle I).
 - **Scale envelope**: designed for hundreds to low thousands of Markdown files per project.
   Performance is secondary to correctness; optimization work requires a measured problem first.
-- **Distribution**: local development usage for v0.x. No packaging, installers, or single-binary
-  builds until the core has proven itself in dogfooding (Principle VII).
+- **Distribution**: published as a public npm package, `@tjespers/fmctl`, exposing both the
+  library entry point and the `fmctl` CLI binary. Releases are automated: Conventional Commits
+  drive version bumps and CHANGELOG generation (release-please), a GitHub Release is the cut
+  point, and publication to npm runs from CI with build provenance via OIDC trusted publishing —
+  no long-lived tokens. Pre-1.0 versions remain free to make breaking changes. This is the
+  graduation Principle VII anticipates — a second consumer importing fmctl as an npm package —
+  unblocked because spec 001 is implemented and proven in dogfooding, not a relaxation of the
+  prove-before-grow gate.
 
 ## Development Workflow
 
@@ -142,6 +157,10 @@ consumer, keeps the public API honest and complete before that consumer arrives.
   implementation. Heavy artifacts are produced only when they pay for themselves.
 - **Commits**: every commit message follows the Conventional Commits specification, enforced by
   a commit-msg hook — the same wall for humans and agents.
+- **License headers**: fmctl is licensed under Apache-2.0 (see `LICENSE`). Every first-party
+  source file — TypeScript under `src/` and `tests/` — MUST carry the standard Apache-2.0
+  header. A pre-commit hook inserts the header on new files and fails the commit when it is
+  missing — the same automated wall for humans and agents as the commit-msg hook.
 - **Constitution gate**: every implementation plan passes the Constitution Check before research
   and design begin, and re-checks after design.
 - **Spec compliance**: implementation is reviewed against its spec (functional requirement
@@ -165,4 +184,4 @@ Compliance is verified at two points: the Constitution Check gate in every plan,
 every implementation against its spec and these principles. Unjustified complexity is rejected,
 not tolerated.
 
-**Version**: 1.0.1 | **Ratified**: 2026-06-10 | **Last Amended**: 2026-06-12
+**Version**: 1.1.0 | **Ratified**: 2026-06-10 | **Last Amended**: 2026-06-16
