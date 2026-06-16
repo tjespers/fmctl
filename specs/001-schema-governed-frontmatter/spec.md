@@ -12,7 +12,8 @@
 mechanism it mentions was subsequently removed from v0.1 scope (see FR-008 and Out of Scope);
 the per-invocation override and the in-file modeline are the only v0.1 schema sources. Lint's
 "walks all Markdown files" was likewise refined during review: discovery honors `.gitignore`
-(see FR-011).*
+(see FR-011). Reading was broadened after the original spec: a read returns either a single
+field or the entire frontmatter of one file (see FR-001 and User Story 3).*
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -58,20 +59,22 @@ A developer, a CI job, or an agent checks an entire folder tree of Markdown file
 
 ---
 
-### User Story 3 - Read a Field (Priority: P3)
+### User Story 3 - Read Frontmatter: a Field or the Whole Block (Priority: P3)
 
-A developer or agent reads the value of any frontmatter field from a file — a human gets a plainly printed value, a script or agent gets structured output.
+A developer or agent reads frontmatter from a file — either the value of one named field, or the entire frontmatter (every top-level field and its whole value) in a single operation. A human gets a plainly printed value or a readable rendering; a script or agent gets structured output. Reading the whole block at once is the natural first step of the agent loop ("read all state before acting") and mirrors editing, which already accepts multiple fields in one invocation.
 
 **Why this priority**: Reading is the cheapest, most frequent operation in agent workflows (check state before acting), but it delivers value only alongside trustworthy editing and validation.
 
-**Independent Test**: On a file with known frontmatter, read an existing scalar field, an existing list field, and a missing field, and verify the values and the distinct not-found failure.
+**Independent Test**: On a file with known frontmatter, read an existing scalar field, an existing list field, a missing field, and the whole frontmatter at once; verify the individual values, the complete field set, and the distinct not-found failure.
 
 **Acceptance Scenarios**:
 
 1. **Given** a file with an existing field, **When** the user reads it, **Then** the value is printed plainly, and structured output is available on request.
 2. **Given** a field that does not exist in the file, **When** the user reads it, **Then** the command fails with a distinct not-found error and exit code.
 3. **Given** a list-valued field, **When** the user reads it with structured output, **Then** the full list of values is returned.
-4. **Given** a file with malformed frontmatter, **When** the user reads any field, **Then** the command refuses with an error naming the file and the parse problem.
+4. **Given** a file with malformed frontmatter, **When** the user reads a field or the whole frontmatter, **Then** the command refuses with an error naming the file and the parse problem.
+5. **Given** a file with frontmatter, **When** the user reads the whole frontmatter (naming no field), **Then** every top-level field and its whole value is returned as structured output, with a plain rendering available for humans; reading never validates.
+6. **Given** a file whose frontmatter block is empty, **When** the user reads the whole frontmatter, **Then** an empty set of fields is returned and the command succeeds.
 
 ---
 
@@ -99,7 +102,7 @@ A developer brings a file that follows an external standard — one whose schema
 
 - A file with malformed YAML or a missing closing delimiter is never read best-effort and never written to — distinct error and exit code, file and problem named, with or without the bypass option.
 - A Markdown file with no frontmatter block at all: lint reports it as skipped; read and edit commands fail with a distinct "no frontmatter" error (creating a new frontmatter block is out of scope for v0.1).
-- An empty frontmatter block (delimiters with nothing between): reading any field yields not-found; setting a field creates it.
+- An empty frontmatter block (delimiters with nothing between): reading a named field yields not-found; reading the whole frontmatter yields an empty set of fields; setting a field creates it.
 - A file that is already invalid against its schema in field B, when the user edits only field A: whole-document validation fails, naming field B. The user fixes both in one multi-field invocation or uses the bypass deliberately.
 - The schema document itself is unreadable, not valid JSON, or not a valid schema: every operation needing it refuses loudly.
 - Frontmatter containing duplicate keys: refused as ambiguous — named file, named key.
@@ -111,7 +114,7 @@ A developer brings a file that follows an external standard — one whose schema
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST read the value of any top-level frontmatter field from a Markdown file, with both human-readable and machine-readable output forms.
+- **FR-001**: The system MUST read frontmatter from a Markdown file in two forms — the value of a single named top-level field, or the entire frontmatter (every top-level field and its whole value) in one operation — each with both human-readable and machine-readable output forms. Reads never validate.
 - **FR-002**: The system MUST update one or more top-level frontmatter fields in a single invocation, accepting any JSON-representable value (scalar, list, or object) as a whole-value replacement of each named field.
 - **FR-003**: The system MUST create a top-level field that does not yet exist when it is set (added as a new line at the end of the frontmatter block), subject to the same validation as any other write.
 - **FR-004**: After any successful write, all file content other than the changed fields' lines MUST be byte-identical to before: comments (block and inline), key order, quoting style, indentation, whitespace, blank lines, and the entire document body.
@@ -157,8 +160,8 @@ A developer brings a file that follows an external standard — one whose schema
 
 - Values supplied to an edit are interpreted as YAML values: plain scalars (unquoted `true`/`42` become boolean/number; quoting forces a string), flow sequences (`[…]`) for lists, and flow mappings (`{…}`) for objects; the schema then enforces expected types.
 - Newly created fields are appended at the end of the frontmatter block.
-- Reads and writes address top-level fields only, always as whole values; nested-path addressing is unsupported in v0.1 — a write naming a field that contains a dot is rejected with a distinct error (writing literal dotted keys is deferred along with nested addressing), while reads treat field names literally.
-- Read and edit commands operate on one file per invocation; folder-scale operation is lint's job in v0.1.
+- Reads and writes address top-level fields only, always as whole values; a read targets either one named field or the entire frontmatter of a file, while a write names one or more fields. Nested-path addressing is unsupported in v0.1 — a write naming a field that contains a dot is rejected with a distinct error (writing literal dotted keys is deferred along with nested addressing), while reads treat field names literally.
+- Read and edit commands operate on one file per invocation; folder-scale operation is lint's job in v0.1. Reading the whole frontmatter of a single file is in scope; querying across a folder (the "query like a database" use case) remains out of scope.
 - A Markdown file with no frontmatter block cannot be read from or written to in v0.1 (distinct error); creating frontmatter blocks from scratch is deferred.
 - The exact modeline syntax is a design-phase decision; one modeline per file applies in v0.1. Relative modeline references intentionally travel with the file (moving a file without its schema breaks the reference — accepted for v0.1; stable URI references arrive with the future configuration/catalog feature).
 - v0.1 has no configuration file concept at all; in practice, project-wide schema enforcement is achieved by supplying the per-invocation schema override (e.g. via a task runner or agent harness wrapper).

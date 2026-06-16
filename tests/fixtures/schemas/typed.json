@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["type"],
+  "properties": {
+    "type": { "enum": ["task", "decision"] }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "task" } }, "required": ["type"] },
+      "then": {
+        "required": ["status"],
+        "properties": { "status": { "enum": ["draft", "review", "done"] } }
+      }
+    },
+    {
+      "if": { "properties": { "type": { "const": "decision" } }, "required": ["type"] },
+      "then": {
+        "required": ["outcome"],
+        "properties": { "outcome": { "enum": ["accepted", "rejected"] } }
+      }
+    }
+  ]
+}

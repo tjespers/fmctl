@@ -33,10 +33,10 @@ adapter), `tests/` (`unit/`, `integration/`, `fixtures/`, `helpers/`) per plan.m
 
 **Purpose**: Project initialization — compiler, test runner, package surface
 
-- [ ] T001 Extend package.json: runtime deps `yaml@^2.9`, `ajv@^8`, `ajv-formats`, `commander`, `ignore`; dev deps `typescript@^5`, `vitest`, `@types/node`; `exports` (library entry `./dist/lib/index.js` + types), `bin.fmctl` → `./dist/cli/main.js`, scripts `build` (tsc) and `test` (vitest run)
-- [ ] T002 [P] Create tsconfig.json: `strict`, `module`/`moduleResolution` NodeNext, ES2022 target, `declaration`, `rootDir` src, `outDir` dist
-- [ ] T003 [P] Create vitest.config.ts (node environment, `tests/**/*.test.ts` include; `passWithNoTests: true` so the Phase 1 checkpoint is green before any tests exist; `slow` tag support for the perf test)
-- [ ] T004 [P] Create directory skeleton `src/lib/`, `src/cli/commands/`, `tests/{unit,integration,fixtures/{splice,lint,modeline,schemas},helpers}/` with `.gitkeep`s, and add `build`/`test` tasks to Taskfile.yml
+- [x] T001 Extend package.json: runtime deps `yaml@^2.9`, `ajv@^8`, `ajv-formats`, `commander`, `ignore`; dev deps `typescript@^5`, `vitest`, `@types/node`; `exports` (library entry `./dist/lib/index.js` + types), `bin.fmctl` → `./dist/cli/main.js`, scripts `build` (tsc) and `test` (vitest run)
+- [x] T002 [P] Create tsconfig.json: `strict`, `module`/`moduleResolution` NodeNext, ES2022 target, `declaration`, `rootDir` src, `outDir` dist
+- [x] T003 [P] Create vitest.config.ts (node environment, `tests/**/*.test.ts` include; `passWithNoTests: true` so the Phase 1 checkpoint is green before any tests exist; `slow` tag support for the perf test)
+- [x] T004 [P] Create directory skeleton `src/lib/`, `src/cli/commands/`, `tests/{unit,integration,fixtures/{splice,lint,modeline,schemas},helpers}/` with `.gitkeep`s, and add `build`/`test` tasks to Taskfile.yml
 
 **Checkpoint**: `npm install && npm run build && npm test` runs (zero tests, green)
 
@@ -48,12 +48,12 @@ adapter), `tests/` (`unit/`, `integration/`, `fixtures/`, `helpers/`) per plan.m
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T005 [P] Write unit tests for the error hierarchy (every class: stable `code`, `exitCode` per research.md R5 table, `file`/`field` context, `instanceof FmctlError`) in tests/unit/errors.test.ts — observe failing
-- [ ] T006 Implement typed error hierarchy per data-model.md in src/lib/errors.ts
-- [ ] T007 [P] Create base golden corpus in tests/fixtures/splice/ (well-formed variants: block+inline comments, odd spacing, flow/block lists, quoting variants, CRLF, empty block; malformed variants: unclosed delimiter, broken YAML, duplicate keys, non-string keys) plus corpus loader and byte-level diff assertion helpers in tests/helpers/corpus.ts
-- [ ] T008 [P] Write unit tests for the document model (delimiter split with byte-faithful body, `raw` reassembly invariant, CRLF preservation, field locate via `node.range` with 1-based `entryLines`, typed refusals: NoFrontmatterError/ParseError/DuplicateKeyError/NotRepresentableError) in tests/unit/document.test.ts — observe failing
-- [ ] T009 Implement FrontmatterDocument load/split/parse/locate per data-model.md in src/lib/document.ts
-- [ ] T010 Create public API barrel exporting errors + document types in src/lib/index.ts
+- [x] T005 [P] Write unit tests for the error hierarchy (every class: stable `code`, `exitCode` per research.md R5 table, `file`/`field` context, `instanceof FmctlError`) in tests/unit/errors.test.ts — observe failing
+- [x] T006 Implement typed error hierarchy per data-model.md in src/lib/errors.ts
+- [x] T007 [P] Create base golden corpus in tests/fixtures/splice/ (well-formed variants: block+inline comments, odd spacing, flow/block lists, quoting variants, CRLF, empty block; malformed variants: unclosed delimiter, broken YAML, duplicate keys, non-string keys) plus corpus loader and byte-level diff assertion helpers in tests/helpers/corpus.ts
+- [x] T008 [P] Write unit tests for the document model (delimiter split with byte-faithful body, `raw` reassembly invariant, CRLF preservation, field locate via `node.range` with 1-based `entryLines`, typed refusals: NoFrontmatterError/ParseError/DuplicateKeyError/NotRepresentableError) in tests/unit/document.test.ts — observe failing
+- [x] T009 Implement FrontmatterDocument load/split/parse/locate per data-model.md in src/lib/document.ts
+- [x] T010 Create public API barrel exporting errors + document types in src/lib/index.ts
 
 **Checkpoint**: Foundation green — user story implementation can begin
 
@@ -69,26 +69,26 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 1 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T011 [P] [US1] Extend tests/fixtures/splice/ with operation triples (input, operation, expected-output): scalar edit preserving inline comment, edit beside odd spacing, flow-list wholesale replace, block-list wholesale replace, object (flow-mapping) whole-value replace, quoted-value edit, field append to end of block, append to empty block, CRLF file edit
-- [ ] T012 [P] [US1] Write splice-engine unit tests asserting byte-level equality against every fixture triple (Buffer.equals, no string trimming) in tests/unit/splice.test.ts
-- [ ] T013 [P] [US1] Write value parsing/serialization unit tests (YAML value typing: `true`/`42`/quoted-string scalars; leading-`[` flow sequence incl. JSON array input; leading-`{` flow mapping incl. JSON object input; unparseable value syntax → UsageError; serialized form round-trips to identical parsed value) in tests/unit/values.test.ts
-- [ ] T014 [P] [US1] Write validation unit tests (Ajv2020 + ajv-formats wiring; translation: enum → `expected: one of …` with allowedValues, required → `field` = the missing property's name (from `params.missingProperty`), type mismatch; violations translated correctly through a composed per-type schema (allOf + if/then keyed on `type`); `allErrors`; unparseable/invalid schema → SchemaInvalidError) in tests/unit/validate.test.ts using tests/fixtures/schemas/
-- [ ] T015 [P] [US1] Write resolution unit tests for v0.1 chain without modeline (invocation override → GoverningSchema{authority:'invocation'}; nothing → null; missing/unreadable override file → SchemaUnresolvableError) in tests/unit/resolve.test.ts
-- [ ] T016 [P] [US1] Write atomic-writer unit tests (temp+rename in same dir; verify-before-rename: re-parse equality + line-span diff confinement; induced failures: read-only dir, injected rename failure, corrupted-render simulation → VerificationError/IoError with original byte-identical) in tests/unit/writer.test.ts
-- [ ] T017 [P] [US1] Write setFields orchestration unit tests (multi-field all-or-nothing, validation refusal writes nothing, created fields appended last, `changes[].before/after/created`, `validated`/`bypassed`/`governedBy` state, ValidationError carries violations, dotted field name → UsageError `code` `nested-path-unsupported` with nothing written) in tests/unit/api.set.test.ts
+- [x] T011 [P] [US1] Extend tests/fixtures/splice/ with operation triples (input, operation, expected-output): scalar edit preserving inline comment, edit beside odd spacing, flow-list wholesale replace, block-list wholesale replace, object (flow-mapping) whole-value replace, quoted-value edit, field append to end of block, append to empty block, CRLF file edit
+- [x] T012 [P] [US1] Write splice-engine unit tests asserting byte-level equality against every fixture triple (Buffer.equals, no string trimming) in tests/unit/splice.test.ts
+- [x] T013 [P] [US1] Write value parsing/serialization unit tests (YAML value typing: `true`/`42`/quoted-string scalars; leading-`[` flow sequence incl. JSON array input; leading-`{` flow mapping incl. JSON object input; unparseable value syntax → UsageError; serialized form round-trips to identical parsed value) in tests/unit/values.test.ts
+- [x] T014 [P] [US1] Write validation unit tests (Ajv2020 + ajv-formats wiring; translation: enum → `expected: one of …` with allowedValues, required → `field` = the missing property's name (from `params.missingProperty`), type mismatch; violations translated correctly through a composed per-type schema (allOf + if/then keyed on `type`); `allErrors`; unparseable/invalid schema → SchemaInvalidError) in tests/unit/validate.test.ts using tests/fixtures/schemas/
+- [x] T015 [P] [US1] Write resolution unit tests for v0.1 chain without modeline (invocation override → GoverningSchema{authority:'invocation'}; nothing → null; missing/unreadable override file → SchemaUnresolvableError) in tests/unit/resolve.test.ts
+- [x] T016 [P] [US1] Write atomic-writer unit tests (temp+rename in same dir; verify-before-rename: re-parse equality + line-span diff confinement; induced failures: read-only dir, injected rename failure, corrupted-render simulation → VerificationError/IoError with original byte-identical) in tests/unit/writer.test.ts
+- [x] T017 [P] [US1] Write setFields orchestration unit tests (multi-field all-or-nothing, validation refusal writes nothing, created fields appended last, `changes[].before/after/created`, `validated`/`bypassed`/`governedBy` state, ValidationError carries violations, dotted field name → UsageError `code` `nested-path-unsupported` with nothing written) in tests/unit/api.set.test.ts
 
 ### Implementation for User Story 1
 
-- [ ] T018 [US1] Implement value parsing/serialization in src/lib/values.ts (green T013)
-- [ ] T019 [US1] Implement splice engine (range splice for existing fields, end-of-block append for new fields, EOL-flavor aware) in src/lib/splice.ts (green T012/T011)
-- [ ] T020 [US1] Implement schema resolution without modeline tier (override → null) in src/lib/resolve.ts (green T015)
-- [ ] T021 [US1] Implement ajv wrapper + violation translation in src/lib/validate.ts (green T014)
-- [ ] T022 [US1] Implement atomic verify-or-revert writer in src/lib/writer.ts (green T016)
-- [ ] T023 [US1] Implement setFields orchestration (load → edit → validate → stage → verify → commit per data-model.md pipeline) and export via src/lib/index.ts (green T017)
-- [ ] T024 [P] [US1] Write CLI integration tests for `fmctl set` driving the built binary via node:child_process (JSON success shape with before/after/governedBy, violation refusal exit 1 + stderr JSON with violations[], `--no-validate`, unvalidated-write stderr notice, exit codes 2/3/4/5/6 plus 7 on filesystem failure (e.g. read-only target directory), dotted field name exit 2 with `code` `nested-path-unsupported`, value syntax incl. flow lists) in tests/integration/cli-set.test.ts — observe failing
-- [ ] T025 [US1] Implement CLI scaffold: commander program in src/cli/main.ts and human/JSON renderers + FmctlError→exit-code mapping in src/cli/output.ts
-- [ ] T026 [US1] Implement `set` command (field=value parsing, --schema, --no-validate, --json) in src/cli/commands/set.ts (green T024)
-- [ ] T045 [P] Write architecture-guard test asserting src/cli sources import from the library only via src/lib/index.ts (scan import statements — zero new dependencies, Constitution Principle VII) in tests/unit/architecture.test.ts — cross-cutting, ordered here so the boundary is guarded from the first CLI code
+- [x] T018 [US1] Implement value parsing/serialization in src/lib/values.ts (green T013)
+- [x] T019 [US1] Implement splice engine (range splice for existing fields, end-of-block append for new fields, EOL-flavor aware) in src/lib/splice.ts (green T012/T011)
+- [x] T020 [US1] Implement schema resolution without modeline tier (override → null) in src/lib/resolve.ts (green T015)
+- [x] T021 [US1] Implement ajv wrapper + violation translation in src/lib/validate.ts (green T014)
+- [x] T022 [US1] Implement atomic verify-or-revert writer in src/lib/writer.ts (green T016)
+- [x] T023 [US1] Implement setFields orchestration (load → edit → validate → stage → verify → commit per data-model.md pipeline) and export via src/lib/index.ts (green T017)
+- [x] T024 [P] [US1] Write CLI integration tests for `fmctl set` driving the built binary via node:child_process (JSON success shape with before/after/governedBy, violation refusal exit 1 + stderr JSON with violations[], `--no-validate`, unvalidated-write stderr notice, exit codes 2/3/4/5/6 plus 7 on filesystem failure (e.g. read-only target directory), dotted field name exit 2 with `code` `nested-path-unsupported`, value syntax incl. flow lists) in tests/integration/cli-set.test.ts — observe failing
+- [x] T025 [US1] Implement CLI scaffold: commander program in src/cli/main.ts and human/JSON renderers + FmctlError→exit-code mapping in src/cli/output.ts
+- [x] T026 [US1] Implement `set` command (field=value parsing, --schema, --no-validate, --json) in src/cli/commands/set.ts (green T024)
+- [x] T045 [P] Write architecture-guard test asserting src/cli sources import from the library only via src/lib/index.ts (scan import statements — zero new dependencies, Constitution Principle VII) in tests/unit/architecture.test.ts — cross-cutting, ordered here so the boundary is guarded from the first CLI code
 
 **Checkpoint**: MVP — quickstart scenarios 2–6 pass end-to-end
 
@@ -105,14 +105,14 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 2 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T027 [P] [US2] Create lint fixture tree in tests/fixtures/lint/ (valid files, seeded violations across violation classes incl. against a composed per-type schema, no-frontmatter file, malformed file, nested dirs, a hidden dir (e.g. `.docs/`) with a governed file that MUST be walked, gitignored content: root and nested ignore files with a dir-only and a negation pattern covering a violating file that must not be reported). Ignore files are stored as `_gitignore` and renamed to `.gitignore` when the corpus helper stages the tree into a temp dir — a real `.gitignore` in fixtures would make git ignore the fixtures themselves; extend tests/helpers/corpus.ts with this staging (which also exercises the no-git-repo case, per research R8)
-- [ ] T028 [P] [US2] Write lint unit tests (recursive `*.md` discovery honoring `.gitignore` — root and nested files, dir-only and negation patterns, ignored dirs pruned not descended, `.git` always skipped, hidden dirs walked; explicit file arguments linted directly even when gitignored; exit-precedence edge: all files errored → invalid/error outcome not nothing-validated, per-file fault isolation, FileLintResult statuses valid/invalid/ungoverned/skipped-no-frontmatter/error, governedBy attribution, summary counts, ErrorInfo serialization) in tests/unit/lint.test.ts
-- [ ] T029 [P] [US2] Write CLI integration tests for `fmctl lint` (human per-file lines + summary, `--json` full LintResult, exit 1 on invalid/error, exit 5 on unusable --schema and on nothing-validated, exit 0 when ungoverned and skipped files appear alongside at least one validated file, default path `.` when invoked with no path arguments) in tests/integration/cli-lint.test.ts
+- [x] T027 [P] [US2] Create lint fixture tree in tests/fixtures/lint/ (valid files, seeded violations across violation classes incl. against a composed per-type schema, no-frontmatter file, malformed file, nested dirs, a hidden dir (e.g. `.docs/`) with a governed file that MUST be walked, gitignored content: root and nested ignore files with a dir-only and a negation pattern covering a violating file that must not be reported). Ignore files are stored as `_gitignore` and renamed to `.gitignore` when the corpus helper stages the tree into a temp dir — a real `.gitignore` in fixtures would make git ignore the fixtures themselves; extend tests/helpers/corpus.ts with this staging (which also exercises the no-git-repo case, per research R8)
+- [x] T028 [P] [US2] Write lint unit tests (recursive `*.md` discovery honoring `.gitignore` — root and nested files, dir-only and negation patterns, ignored dirs pruned not descended, `.git` always skipped, hidden dirs walked; explicit file arguments linted directly even when gitignored; exit-precedence edge: all files errored → invalid/error outcome not nothing-validated, per-file fault isolation, FileLintResult statuses valid/invalid/ungoverned/skipped-no-frontmatter/error, governedBy attribution, summary counts, ErrorInfo serialization) in tests/unit/lint.test.ts
+- [x] T029 [P] [US2] Write CLI integration tests for `fmctl lint` (human per-file lines + summary, `--json` full LintResult, exit 1 on invalid/error, exit 5 on unusable --schema and on nothing-validated, exit 0 when ungoverned and skipped files appear alongside at least one validated file, default path `.` when invoked with no path arguments) in tests/integration/cli-lint.test.ts
 
 ### Implementation for User Story 2
 
-- [ ] T030 [US2] Implement walker + report assembly in src/lib/lint.ts, export lintPaths via src/lib/index.ts (green T028)
-- [ ] T031 [US2] Implement `lint` command + renderers in src/cli/commands/lint.ts and extend src/cli/output.ts (green T029)
+- [x] T030 [US2] Implement walker + report assembly in src/lib/lint.ts, export lintPaths via src/lib/index.ts (green T028)
+- [x] T031 [US2] Implement `lint` command + renderers in src/cli/commands/lint.ts and extend src/cli/output.ts (green T029)
 
 **Checkpoint**: US1 + US2 work independently — CI-style guardrail available
 
@@ -128,13 +128,13 @@ invalid edit leaves the file byte-identical with an actionable error
 
 ### Tests for User Story 3 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T032 [P] [US3] Write getField unit tests (scalar, list, object-valued field returned in full as JsonValue, FieldNotFoundError incl. on an empty frontmatter block, NoFrontmatterError, ParseError pass-through) in tests/unit/api.get.test.ts
-- [ ] T033 [P] [US3] Write CLI integration tests for `fmctl get` (plain value, flow-list rendering, `--json` GetResult shape, exit 0/3/4) in tests/integration/cli-get.test.ts
+- [x] T032 [P] [US3] Write getField unit tests (scalar, list, object-valued field returned in full as JsonValue, FieldNotFoundError incl. on an empty frontmatter block, NoFrontmatterError, ParseError pass-through) in tests/unit/api.get.test.ts
+- [x] T033 [P] [US3] Write CLI integration tests for `fmctl get` (plain value, flow-list rendering, `--json` GetResult shape, exit 0/3/4) in tests/integration/cli-get.test.ts
 
 ### Implementation for User Story 3
 
-- [ ] T034 [US3] Implement getField and export via src/lib/index.ts (green T032)
-- [ ] T035 [US3] Implement `get` command in src/cli/commands/get.ts (green T033)
+- [x] T034 [US3] Implement getField and export via src/lib/index.ts (green T032)
+- [x] T035 [US3] Implement `get` command in src/cli/commands/get.ts (green T033)
 
 **Checkpoint**: All read/write/validate primitives shipped
 
@@ -150,15 +150,15 @@ data fields; URI ref exits 5; modeline survives writes byte-for-byte
 
 ### Tests for User Story 4 (MANDATORY — write first, observe failing) ⚠️
 
-- [ ] T036 [P] [US4] Create modeline fixtures in tests/fixtures/modeline/ (modeline-governed file, strict external-standard file with `additionalProperties: false` schema, URI modeline, broken-ref modeline, standalone file outside any tree, modeline+odd placement within block)
-- [ ] T037 [P] [US4] Write modeline unit tests (grammar scan on raw frontmatter text, whitespace tolerance, first-match-wins, SchemaRef kinds absolute/relative/uri with `location` resolution, never exposed as data) in tests/unit/modeline.test.ts
-- [ ] T038 [P] [US4] Extend resolution + document tests: modeline tier precedence (invocation override beats modeline; modeline → GoverningSchema{authority:'document'}; broken ref → SchemaUnresolvableError; URI ref → distinct `schema-uri-reserved` code) in tests/unit/resolve.test.ts and FrontmatterDocument.modeline field in tests/unit/document.test.ts
-- [ ] T039 [P] [US4] Write CLI integration tests: set/lint against modeline-governed and standalone files, modeline byte-survival through writes, URI exit 5, lint authority attribution "document" in tests/integration/cli-modeline.test.ts
+- [x] T036 [P] [US4] Create modeline fixtures in tests/fixtures/modeline/ (modeline-governed file, strict external-standard file with `additionalProperties: false` schema, URI modeline, broken-ref modeline, standalone file outside any tree, modeline+odd placement within block)
+- [x] T037 [P] [US4] Write modeline unit tests (grammar scan on raw frontmatter text, whitespace tolerance, first-match-wins, SchemaRef kinds absolute/relative/uri with `location` resolution, never exposed as data) in tests/unit/modeline.test.ts
+- [x] T038 [P] [US4] Extend resolution + document tests: modeline tier precedence (invocation override beats modeline; modeline → GoverningSchema{authority:'document'}; broken ref → SchemaUnresolvableError; URI ref → distinct `schema-uri-reserved` code) in tests/unit/resolve.test.ts and FrontmatterDocument.modeline field in tests/unit/document.test.ts
+- [x] T039 [P] [US4] Write CLI integration tests: set/lint against modeline-governed and standalone files, modeline byte-survival through writes, URI exit 5, lint authority attribution "document" in tests/integration/cli-modeline.test.ts
 
 ### Implementation for User Story 4
 
-- [ ] T040 [US4] Implement modeline scanner/parser in src/lib/modeline.ts (green T037)
-- [ ] T041 [US4] Wire modeline tier into src/lib/resolve.ts and `modeline` field into src/lib/document.ts; implement resolveSchema public function; export Modeline/SchemaRef/GoverningSchema via src/lib/index.ts (green T038/T039)
+- [x] T040 [US4] Implement modeline scanner/parser in src/lib/modeline.ts (green T037)
+- [x] T041 [US4] Wire modeline tier into src/lib/resolve.ts and `modeline` field into src/lib/document.ts; implement resolveSchema public function; export Modeline/SchemaRef/GoverningSchema via src/lib/index.ts (green T038/T039)
 
 **Checkpoint**: All four user stories pass their quickstart scenarios
 
@@ -166,11 +166,27 @@ data fields; URI ref exits 5; modeline survives writes byte-for-byte
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T042 [P] Write agent round-trip integration test: scripted get → set --json → lint --json cycle consuming only JSON stdout/stderr + exit codes (SC-004, quickstart scenario 10) in tests/integration/agent-roundtrip.test.ts
-- [ ] T043 [P] Write performance test: generate 1,000 governed files in a temp dir, assert lint wall-clock < 10 s, tagged slow (SC-007, quickstart scenario 11) in tests/integration/perf-lint.test.ts
-- [ ] T044 [P] Write README.md: usage for all three commands, modeline syntax, exit-code table (the documented contract per FR-015), library-consumer example
-- [ ] T046 Execute quickstart.md scenarios 1–9 manually against the built binary and dogfood on the author's real project with ≥20 seeded violations; record results in specs/001-schema-governed-frontmatter/quickstart-results.md (SC-001–SC-006)
-- [ ] T047 Final pass: `npm run build && npm test` green, pre-commit hooks green, no constitution violations (re-read gate table in plan.md)
+- [x] T042 [P] Write agent round-trip integration test: scripted get → set --json → lint --json cycle consuming only JSON stdout/stderr + exit codes (SC-004, quickstart scenario 10) in tests/integration/agent-roundtrip.test.ts
+- [x] T043 [P] Write performance test: generate 1,000 governed files in a temp dir, assert lint wall-clock < 10 s, tagged slow (SC-007, quickstart scenario 11) in tests/integration/perf-lint.test.ts
+- [x] T044 [P] Write README.md: usage for all three commands, modeline syntax, exit-code table (the documented contract per FR-015), library-consumer example
+- [x] T046 Execute quickstart.md scenarios 1–9 manually against the built binary and dogfood on the author's real project with ≥20 seeded violations; record results in specs/001-schema-governed-frontmatter/quickstart-results.md (SC-001–SC-006)
+- [x] T047 Final pass: `npm run build && npm test` green, pre-commit hooks green, no constitution violations (re-read gate table in plan.md)
+
+---
+
+## Phase 8: Amendment — Whole-Frontmatter Read (User Story 3)
+
+**Context**: A v0.1 scope addition decided after the original spec, routed back through
+`/speckit.specify` (spec FR-001 broadened; US3 scenarios 5–6). `get` gains the ability to read
+a file's entire frontmatter when no field is named. Library-first and TDD as before.
+
+- [x] T048 [US3] Extend getField unit tests with getFrontmatter cases (whole frontmatter as JSON-representable data; empty block → `{}`; NoFrontmatterError/ParseError pass-through; modeline never surfaced as a field) in tests/unit/api.get.test.ts — observe failing
+- [x] T049 [US3] Implement `getFrontmatter(filePath)` returning `FrontmatterResult { file, frontmatter }` in src/lib/api.ts and export it (+ the type) via src/lib/index.ts (green T048)
+- [x] T050 [US3] Make the `get` command's `field` argument optional and branch to whole-read in src/cli/commands/get.ts; add `printFrontmatter` (one `field: value` line per entry, or JSON) in src/cli/output.ts
+- [x] T051 [US3] Extend CLI tests — in-process (tests/unit/cli.test.ts) and integration (tests/integration/cli-get.test.ts): whole-read JSON shape `{file, frontmatter}`, human `field: value` lines, exit 3 on a no-frontmatter file
+- [x] T052 Update README.md `get` usage and the library-consumer example, and extend quickstart.md Scenario 1, to cover whole-frontmatter read (resolves analyze finding C1)
+
+**Checkpoint**: `fmctl get <file>` returns the whole block; quickstart scenario 1 extended; build + full suite green
 
 ---
 

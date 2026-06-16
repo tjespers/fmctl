@@ -1,0 +1,3 @@
+ignored/
+*.draft.md
+!keep.draft.md
