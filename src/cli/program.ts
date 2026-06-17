@@ -24,7 +24,7 @@ export function buildProgram(): Command {
   program
     .name('fmctl')
     .description('Schema-governed frontmatter management for Markdown files')
-    .version('0.1.0') // x-release-please-version
+    .version('0.2.0') // x-release-please-version
     .exitOverride();
 
   registerGet(program);
