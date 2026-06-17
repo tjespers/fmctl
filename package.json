@@ -1,6 +1,6 @@
 {
   "name": "@tjespers/fmctl",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Manage YAML frontmatter across folders of inter-linked Markdown files",
   "keywords": [
     "frontmatter",
